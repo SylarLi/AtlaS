@@ -7,6 +7,8 @@ namespace AtlaS
     [Serializable]
     public class AtlasRaw : ScriptableObject
     {
+        public int id;
+
         public int maxSize;
 
         public int padding;
@@ -116,6 +118,11 @@ namespace AtlaS
         /// Index of sprite's bin in atlas.
         /// </summary>
         public int bin;
+
+        /// <summary>
+        /// Unique id.
+        /// </summary>
+        public ushort id;
 
         /// <summary>
         /// Sprite asset name.

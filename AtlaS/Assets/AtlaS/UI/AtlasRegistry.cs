@@ -11,16 +11,25 @@ namespace AtlaS.UI
 
         public static Sprite RegisterAtlasSprite(AtlasRaw atlasRaw, string sprite)
         {
+#if UNITY_EDITOR
+            return new AtlasSpriteSet(atlasRaw).FindSprite(sprite);
+#else
             if (!mSpriteSet.ContainsKey(atlasRaw))
             {
                 mSpriteSet.Add(atlasRaw, new AtlasSpriteSet(atlasRaw));
                 atlasRaw.RegisterDestroyCallBack(OnAtlasRawDestroyed);
             }
             return mSpriteSet[atlasRaw].FindSprite(sprite);
+#endif
         }
 
         public static Material RegisterAtlasMaterial(AtlasRaw atlasRaw, string sprite)
         {
+#if UNITY_EDITOR
+            var spriteRaw = atlasRaw.FindSprite(sprite);
+            return spriteRaw == null ? null :
+                new AtlasMaterialSet(atlasRaw).FindMaterial(spriteRaw.bin);
+#else
             if (!mMaterialSet.ContainsKey(atlasRaw))
             {
                 mMaterialSet.Add(atlasRaw, new AtlasMaterialSet(atlasRaw));
@@ -28,6 +37,7 @@ namespace AtlaS.UI
             var spriteRaw = atlasRaw.FindSprite(sprite);
             return spriteRaw == null ? null :
                 mMaterialSet[atlasRaw].FindMaterial(spriteRaw.bin);
+#endif
         }
 
         private static void OnAtlasRawDestroyed(AtlasRaw atlasRaw)

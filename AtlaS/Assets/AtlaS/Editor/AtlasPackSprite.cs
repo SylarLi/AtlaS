@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.IO;
+using System.Collections.Generic;
 
 namespace AtlaS
 {
@@ -12,13 +13,27 @@ namespace AtlaS
                 main = bin.main,
                 addition = bin.addition,
                 rawQuality = bin.quality,
+                transparency = bin.transparency,
                 quality = bin.quality,
+                id = sprite.id,
                 name = sprite.name,
                 rect = sprite.rect,
                 border = sprite.border,
                 pivot = sprite.pivot,
-                transparency = bin.transparency,
             };
+        }
+
+        public static AtlasPackSprite[] ListSprites(AtlasRaw atlas)
+        {
+            var list = new List<AtlasPackSprite>();
+            foreach (var bin in atlas.bins)
+            {
+                foreach (var sprite in bin.sprites)
+                {
+                    list.Add(ParseSpriteRaw(bin, sprite));
+                }
+            }
+            return list.ToArray();
         }
 
         private string mPath;
@@ -129,6 +144,8 @@ namespace AtlaS
         public Vector4 border { get; set; }
 
         public Vector2 pivot { get; set; }
+
+        public ushort id { get; set; }
 
         public AtlasPackSprite()
         {

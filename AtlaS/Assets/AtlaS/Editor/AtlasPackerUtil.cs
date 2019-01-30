@@ -11,6 +11,8 @@ namespace AtlaS
     {
         public static string DefaultAtlasAssetName = "_atlas.asset";
 
+        public static int MaxNumberOfSpriteInAtlas = 65535;
+
         public static AtlasRaw PackAssetFolder(AtlasPackData packData, string texFolder)
         {
             var textures = AssetDatabase.FindAssets("t:Texture2D", new string[] { texFolder })
@@ -72,6 +74,11 @@ namespace AtlaS
             var padding = packData.padding;
             var isPOT = packData.isPOT;
             var forceSquare = packData.forceSquare;
+            if (textures.Length > MaxNumberOfSpriteInAtlas)
+            {
+                Debug.LogError(string.Format("Sprites in excess of {0}.", MaxNumberOfSpriteInAtlas));
+                return null;
+            }
             for (int i = 0; i < textures.Length; i++)
             {
                 var texName = textures[i].name;
@@ -116,6 +123,7 @@ namespace AtlaS
                     var texRect = texList[i].rect;
                     var spriteRaw = spriteRaws[i];
                     spriteRaw.name = texName;
+                    spriteRaw.id = texList[i].id;
                     spriteRaw.border = texList[i].border;
                     spriteRaw.pivot = texList[i].pivot;
                     var rect = spriteRaw.rect;
@@ -213,13 +221,6 @@ namespace AtlaS
             {
                 binList.AddRange(piece.bins);
             }
-            for (int i = 0; i < binList.Count; i++)
-            {
-                foreach (var sprite in binList[i].sprites)
-                {
-                    sprite.bin = i;
-                }
-            }
             var combined = ScriptableObject.CreateInstance<AtlasRaw>();
             combined.hideFlags = HideFlags.DontUnloadUnusedAsset;
             combined.bins = binList.ToArray();
@@ -227,7 +228,68 @@ namespace AtlaS
             combined.padding = padding;
             combined.isPOT = isPOT;
             combined.forceSquare = forceSquare;
+            GenerateAtlasData(combined);
             return combined;
+        }
+
+        private static void GenerateAtlasData(AtlasRaw atlasRaw)
+        {
+            var spriteList = new List<SpriteRaw>();
+            var consumedIds = new HashSet<int>();
+            var bins = atlasRaw.bins;
+            for (int i = 0; i < bins.Length; i++)
+            {
+                foreach (var sprite in bins[i].sprites)
+                {
+                    sprite.bin = i;
+                    spriteList.Add(sprite);
+                    if (sprite.id > 0)
+                    {
+                        consumedIds.Add(sprite.id);
+                    }
+                }
+            }
+            foreach (var sprite in spriteList)
+            {
+                if (sprite.id == 0)
+                {
+                    ushort id = 1;
+                    while (id++ < MaxNumberOfSpriteInAtlas)
+                    {
+                        if (!consumedIds.Contains(id))
+                        {
+                            consumedIds.Add(id);
+                            sprite.id = id;
+                            break;
+                        }
+                    }
+                }
+            }
+            var repeatIds = new HashSet<int>();
+            foreach (var sprite in spriteList)
+            {
+                if (repeatIds.Contains(sprite.id))
+                {
+                    ushort id = 1;
+                    while (id++ < MaxNumberOfSpriteInAtlas)
+                    {
+                        if (!consumedIds.Contains(id))
+                        {
+                            consumedIds.Add(id);
+                            sprite.id = id;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    repeatIds.Add(sprite.id);
+                }
+            }
+            if (atlasRaw.id == 0)
+            {
+                atlasRaw.id = UnityEngine.Random.Range(1, int.MaxValue);
+            }
         }
 
         public static bool PackTextures(AtlasPackData packData, AtlasPacker.Area[] textures, out AtlasRaw atlasRaw, out List<SpriteRaw> spriteRaws)
@@ -331,42 +393,17 @@ namespace AtlaS
             return true;
         }
 
-        public static AtlasRaw Repack(AtlasRaw atlasRaw, string atlasPath = null, AtlasPackData packData = null, AtlasPackSprite[] append = null, bool replaceSpriteByName = false)
+        public static AtlasRaw Repack(AtlasRaw atlasRaw, AtlasPackSprite[] textures = null, AtlasPackData packData = null)
         {
-            if (string.IsNullOrEmpty(atlasPath))
+            if (textures == null)
             {
-                atlasPath = AssetDatabase.GetAssetPath(atlasRaw);
+                textures = AtlasPackSprite.ListSprites(atlasRaw);
             }
             if (packData == null)
             {
                 packData = new AtlasPackData(atlasRaw.maxSize, atlasRaw.padding, atlasRaw.isPOT, atlasRaw.forceSquare, false);
             }
-            var textures = new List<AtlasPackSprite>();
-            foreach (var binRaw in atlasRaw.bins)
-            {
-                if (binRaw.main != null)
-                {
-                    foreach (var spriteRaw in binRaw.sprites)
-                    {
-                        textures.Add(AtlasPackSprite.ParseSpriteRaw(binRaw, spriteRaw));
-                    }
-                }
-            }
-            if (append != null)
-            {
-                if (replaceSpriteByName)
-                {
-                    for (int i = textures.Count - 1; i >= 0; i--)
-                    {
-                        if (append.Any(a => a.name.Equals(textures[i].name)))
-                        {
-                            textures.RemoveAt(i);
-                        }
-                    }
-                }
-                textures.AddRange(append);
-            }
-            textures.Sort(SortAtlasTextures);
+            Array.Sort(textures, SortAtlasTextures);
             PrepareAtlasTextures(atlasRaw);
             var newAtlasRaw = PackTextures(packData, textures.ToArray());
             if (newAtlasRaw == null)
@@ -378,11 +415,19 @@ namespace AtlaS
 
             EditorUtility.DisplayProgressBar("", "rebuild atlas...", 0.5f);
             RemoveAtlasTextures(atlasRaw);
+            var atlasPath = AssetDatabase.GetAssetPath(atlasRaw);
             SaveAtlasTextures(newAtlasRaw, atlasPath);
-            var savedAtlas = SaveAtlas(newAtlasRaw, atlasPath);
-            Selection.activeObject = savedAtlas;
+            atlasRaw.bins = newAtlasRaw.bins;
+            atlasRaw.maxSize = packData.maxAtlasSize;
+            atlasRaw.padding = packData.padding;
+            atlasRaw.isPOT = packData.isPOT;
+            atlasRaw.forceSquare = packData.forceSquare;
+            GenerateAtlasData(atlasRaw);
+            EditorUtility.SetDirty(atlasRaw);
+            AssetDatabase.SaveAssets();
+
             EditorUtility.ClearProgressBar();
-            return savedAtlas;
+            return atlasRaw;
         }
 
         public static void Export(AtlasRaw atlas, SpriteRaw[] sprites, string folder)

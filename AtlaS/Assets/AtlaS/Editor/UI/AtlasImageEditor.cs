@@ -53,7 +53,7 @@ namespace AtlaS.UI
             mAtlasRaw = serializedObject.FindProperty("mAtlasRaw");
             mSpriteRaw = serializedObject.FindProperty("mSpriteRaw");
 
-            m_ShowType = new AnimBool(!CheckSpriteIsNull());
+            m_ShowType = new AnimBool(!CheckAnySpriteIsNull());
             m_ShowType.valueChanged.AddListener(Repaint);
 
             var typeEnum = (AtlasImage.Type)m_Type.enumValueIndex;
@@ -87,7 +87,7 @@ namespace AtlaS.UI
             AppearanceControlsGUI();
             RaycastControlsGUI();
 
-            m_ShowType.target = !CheckSpriteIsNull();
+            m_ShowType.target = !CheckAnySpriteIsNull();
             if (EditorGUILayout.BeginFadeGroup(m_ShowType.faded))
                 TypeGUI();
             EditorGUILayout.EndFadeGroup();
@@ -108,7 +108,7 @@ namespace AtlaS.UI
         void SetShowNativeSize(bool instant)
         {
             AtlasImage.Type type = (AtlasImage.Type)m_Type.enumValueIndex;
-            bool showNativeSize = (type == AtlasImage.Type.Simple || type == AtlasImage.Type.Filled) && !CheckSpriteIsNull();
+            bool showNativeSize = (type == AtlasImage.Type.Simple || type == AtlasImage.Type.Filled) && !CheckAnySpriteIsNull();
             base.SetShowNativeSize(showNativeSize, instant);
         }
 
@@ -141,6 +141,12 @@ namespace AtlaS.UI
                         }
                     }
                 }
+            }
+            if (mAtlasRaw.objectReferenceValue != null &&
+                !string.IsNullOrEmpty(mSpriteRaw.stringValue) &&
+                CheckAllSpriteIsNull())
+            {
+                EditorGUILayout.LabelField("Can not find sprite in atlas.");
             }
         }
 
@@ -260,9 +266,14 @@ namespace AtlaS.UI
             return string.Format("Image Size: {0}x{1}", x, y);
         }
 
-        bool CheckSpriteIsNull()
+        bool CheckAnySpriteIsNull()
         {
             return targets.Any(target => (target as AtlasImage).sprite == null);
+        }
+
+        bool CheckAllSpriteIsNull()
+        {
+            return targets.All(target => (target as AtlasImage).sprite == null);
         }
     }
 }

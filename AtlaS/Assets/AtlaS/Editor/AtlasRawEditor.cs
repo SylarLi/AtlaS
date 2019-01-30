@@ -740,60 +740,43 @@ namespace AtlaS
 
         private void DeleteSelected(AtlasRaw atlas, List<SelectedSprite> selected)
         {
-            var newAtlas = Instantiate(atlas);
-            var deletes = new List<SpriteRaw>();
+            var list = new List<AtlasPackSprite>(AtlasPackSprite.ListSprites(atlas));
             foreach (var selectedSprite in selected)
             {
-                var bin = newAtlas.bins[selectedSprite.bin];
+                var bin = atlas.bins[selectedSprite.bin];
                 var sprite = bin.sprites[selectedSprite.sprite];
-                deletes.Add(sprite);
-            }
-            foreach (var delete in deletes)
-            {
-                foreach (var bin in newAtlas.bins)
+                for (int i = list.Count - 1; i >= 0; i--)
                 {
-                    var spriteList = bin.sprites.ToList();
-                    if (spriteList.Contains(delete))
+                    if (list[i].id == sprite.id)
                     {
-                        spriteList.Remove(delete);
-                        bin.sprites = spriteList.ToArray();
-                        break;
+                        list.RemoveAt(i);
                     }
                 }
             }
-            AtlasPackerUtil.Repack(newAtlas, AssetDatabase.GetAssetPath(atlas));
+            AtlasPackerUtil.Repack(atlas, list.ToArray());
         }
 
         private void CompressSelected(AtlasRaw atlas, BinRaw.Quality quality, List<SelectedSprite> selected)
         {
-            var newAtlas = Instantiate(atlas);
-            var updates = new List<SpriteRaw>();
+            var count = 0;
+            var list = new List<AtlasPackSprite>(AtlasPackSprite.ListSprites(atlas));
             foreach (var selectedSprite in selected)
             {
-                var bin = newAtlas.bins[selectedSprite.bin];
+                var bin = atlas.bins[selectedSprite.bin];
                 var sprite = bin.sprites[selectedSprite.sprite];
-                if (bin.quality != quality) updates.Add(sprite);
-            }
-            if (updates.Count > 0)
-            {
-                var append = new List<AtlasPackSprite>();
-                foreach (var update in updates)
+                foreach (var packSprite in list)
                 {
-                    foreach (var bin in newAtlas.bins)
+                    if (packSprite.id == sprite.id &&
+                        packSprite.quality != quality)
                     {
-                        var spriteList = bin.sprites.ToList();
-                        if (spriteList.Contains(update))
-                        {
-                            spriteList.Remove(update);
-                            bin.sprites = spriteList.ToArray();
-                            var spritePack = AtlasPackSprite.ParseSpriteRaw(bin, update);
-                            spritePack.quality = quality;
-                            append.Add(spritePack);
-                            break;
-                        }
+                        packSprite.quality = quality;
+                        count += 1;
                     }
                 }
-                AtlasPackerUtil.Repack(newAtlas, AssetDatabase.GetAssetPath(atlas), null, append.ToArray());
+            }
+            if (count > 0)
+            {
+                AtlasPackerUtil.Repack(atlas, list.ToArray());
             }
         }
 
@@ -820,9 +803,23 @@ namespace AtlaS
             menu.ShowAsContext();
         }
 
-        private void AddFiles(AtlasRaw atlas, BinRaw.Quality quality, string[] files)
+        private void AddFiles(AtlasRaw atlas, BinRaw.Quality quality, string[] files, bool replaceSpriteByName = false)
         {
-            var textures = new List<AtlasPackSprite>();
+            var textures = new List<AtlasPackSprite>(AtlasPackSprite.ListSprites(atlas));
+            Action<AtlasPackSprite> addTexture = (texture) =>
+            {
+                if (replaceSpriteByName)
+                {
+                    for (int i = textures.Count - 1; i >= 0; i--)
+                    {
+                        if (textures[i].name.Equals(texture.name))
+                        {
+                            textures.RemoveAt(i);
+                        }
+                    }
+                }
+                textures.Add(texture);
+            };
             foreach (var file in files)
             {
                 if (File.Exists(file))
@@ -831,7 +828,7 @@ namespace AtlaS
                     texture.name = Path.GetFileNameWithoutExtension(file);
                     texture.rawQuality = BinRaw.Quality.Full;
                     texture.quality = quality;
-                    textures.Add(texture);
+                    addTexture(texture);
                 }
                 else if (Directory.Exists(file))
                 {
@@ -848,12 +845,11 @@ namespace AtlaS
                         texture.name = assetLabel;
                         texture.rawQuality = BinRaw.Quality.Full;
                         texture.quality = quality;
-                        textures.Add(texture);
+                        addTexture(texture);
                     }
                 }
             }
-            var newAtlas = Instantiate(atlas);
-            AtlasPackerUtil.Repack(newAtlas, AssetDatabase.GetAssetPath(atlas), null, textures.ToArray());
+            AtlasPackerUtil.Repack(atlas, textures.ToArray());
         }
 
         [Serializable]
