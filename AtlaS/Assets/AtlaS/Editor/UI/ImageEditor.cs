@@ -11,7 +11,7 @@ namespace AtlaS.UI
     /// Editor class used to edit UI Sprites.
     /// </summary>
 
-    [CustomEditor(typeof(AtlasImage), true)]
+    [CustomEditor(typeof(Image), true)]
     [CanEditMultipleObjects]
     public class AtlasImageEditor : GraphicEditor
     {
@@ -51,17 +51,17 @@ namespace AtlaS.UI
             m_PreserveAspect = serializedObject.FindProperty("m_PreserveAspect");
 
             mAtlasRaw = serializedObject.FindProperty("mAtlasRaw");
-            mSpriteRaw = serializedObject.FindProperty("mSpriteRaw");
+            mSpriteRaw = serializedObject.FindProperty("mSpriteRawName");
 
             m_ShowType = new AnimBool(!CheckAnySpriteIsNull());
             m_ShowType.valueChanged.AddListener(Repaint);
 
-            var typeEnum = (AtlasImage.Type)m_Type.enumValueIndex;
+            var typeEnum = (Image.Type)m_Type.enumValueIndex;
 
-            m_ShowSlicedOrTiled = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == AtlasImage.Type.Sliced);
-            m_ShowSliced = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == AtlasImage.Type.Sliced);
-            m_ShowTiled = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == AtlasImage.Type.Tiled);
-            m_ShowFilled = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == AtlasImage.Type.Filled);
+            m_ShowSlicedOrTiled = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == Image.Type.Sliced);
+            m_ShowSliced = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == Image.Type.Sliced);
+            m_ShowTiled = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == Image.Type.Tiled);
+            m_ShowFilled = new AnimBool(!m_Type.hasMultipleDifferentValues && typeEnum == Image.Type.Filled);
             m_ShowSlicedOrTiled.valueChanged.AddListener(Repaint);
             m_ShowSliced.valueChanged.AddListener(Repaint);
             m_ShowTiled.valueChanged.AddListener(Repaint);
@@ -107,8 +107,8 @@ namespace AtlaS.UI
 
         void SetShowNativeSize(bool instant)
         {
-            AtlasImage.Type type = (AtlasImage.Type)m_Type.enumValueIndex;
-            bool showNativeSize = (type == AtlasImage.Type.Simple || type == AtlasImage.Type.Filled) && !CheckAnySpriteIsNull();
+            Image.Type type = (Image.Type)m_Type.enumValueIndex;
+            bool showNativeSize = (type == Image.Type.Simple || type == Image.Type.Filled) && !CheckAnySpriteIsNull();
             base.SetShowNativeSize(showNativeSize, instant);
         }
 
@@ -125,19 +125,19 @@ namespace AtlaS.UI
             {
                 foreach (var target in targets)
                 {
-                    var atlasImage = target as AtlasImage;
+                    var atlasImage = target as Image;
                     atlasImage.OnRebuildRequested();
                     var newSprite = atlasImage.sprite;
-                    if (newSprite)
+                    if (newSprite != null)
                     {
-                        AtlasImage.Type oldType = atlasImage.type;
+                        Image.Type oldType = atlasImage.type;
                         if (newSprite.border.SqrMagnitude() > 0)
                         {
-                            atlasImage.type = AtlasImage.Type.Sliced;
+                            atlasImage.type = Image.Type.Sliced;
                         }
-                        else if (oldType == AtlasImage.Type.Sliced)
+                        else if (oldType == Image.Type.Sliced)
                         {
-                            atlasImage.type = AtlasImage.Type.Simple;
+                            atlasImage.type = Image.Type.Simple;
                         }
                     }
                 }
@@ -146,7 +146,7 @@ namespace AtlaS.UI
                 !string.IsNullOrEmpty(mSpriteRaw.stringValue) &&
                 CheckAllSpriteIsNull())
             {
-                EditorGUILayout.LabelField("Can not find sprite in atlas.");
+                EditorGUILayout.HelpBox("Can not find sprite in atlas.", MessageType.Warning);
             }
         }
 
@@ -160,18 +160,18 @@ namespace AtlaS.UI
 
             ++EditorGUI.indentLevel;
             {
-                AtlasImage.Type typeEnum = (AtlasImage.Type)m_Type.enumValueIndex;
+                Image.Type typeEnum = (Image.Type)m_Type.enumValueIndex;
 
-                bool showSlicedOrTiled = (!m_Type.hasMultipleDifferentValues && (typeEnum == AtlasImage.Type.Sliced || typeEnum == AtlasImage.Type.Tiled));
+                bool showSlicedOrTiled = (!m_Type.hasMultipleDifferentValues && (typeEnum == Image.Type.Sliced || typeEnum == Image.Type.Tiled));
                 if (showSlicedOrTiled && targets.Length > 1)
-                    showSlicedOrTiled = targets.Select(obj => obj as AtlasImage).All(img => img.hasBorder);
+                    showSlicedOrTiled = targets.Select(obj => obj as Image).All(img => img.hasBorder);
 
                 m_ShowSlicedOrTiled.target = showSlicedOrTiled;
-                m_ShowSliced.target = (showSlicedOrTiled && !m_Type.hasMultipleDifferentValues && typeEnum == AtlasImage.Type.Sliced);
-                m_ShowTiled.target = (showSlicedOrTiled && !m_Type.hasMultipleDifferentValues && typeEnum == AtlasImage.Type.Tiled);
-                m_ShowFilled.target = (!m_Type.hasMultipleDifferentValues && typeEnum == AtlasImage.Type.Filled);
+                m_ShowSliced.target = (showSlicedOrTiled && !m_Type.hasMultipleDifferentValues && typeEnum == Image.Type.Sliced);
+                m_ShowTiled.target = (showSlicedOrTiled && !m_Type.hasMultipleDifferentValues && typeEnum == Image.Type.Tiled);
+                m_ShowFilled.target = (!m_Type.hasMultipleDifferentValues && typeEnum == Image.Type.Filled);
 
-                AtlasImage image = target as AtlasImage;
+                Image image = target as Image;
                 if (EditorGUILayout.BeginFadeGroup(m_ShowSlicedOrTiled.faded))
                 {
                     if (image.hasBorder)
@@ -188,7 +188,7 @@ namespace AtlaS.UI
 
                 if (EditorGUILayout.BeginFadeGroup(m_ShowTiled.faded))
                 {
-                    if (image.sprite != null && !image.hasBorder && (image.sprite.texture.wrapMode != TextureWrapMode.Repeat || image.sprite.packed))
+                    if (image.sprite != null && !image.hasBorder)
                         EditorGUILayout.HelpBox("It looks like you want to tile a sprite with no border. It would be more efficient to convert the Sprite to an Advanced texture, clear the Packing tag and set the Wrap mode to Repeat.", MessageType.Warning);
                 }
                 EditorGUILayout.EndFadeGroup();
@@ -201,26 +201,26 @@ namespace AtlaS.UI
                     {
                         m_FillOrigin.intValue = 0;
                     }
-                    switch ((AtlasImage.FillMethod)m_FillMethod.enumValueIndex)
+                    switch ((Image.FillMethod)m_FillMethod.enumValueIndex)
                     {
-                        case AtlasImage.FillMethod.Horizontal:
-                            m_FillOrigin.intValue = (int)(AtlasImage.OriginHorizontal)EditorGUILayout.EnumPopup("Fill Origin", (AtlasImage.OriginHorizontal)m_FillOrigin.intValue);
+                        case Image.FillMethod.Horizontal:
+                            m_FillOrigin.intValue = (int)(Image.OriginHorizontal)EditorGUILayout.EnumPopup("Fill Origin", (Image.OriginHorizontal)m_FillOrigin.intValue);
                             break;
-                        case AtlasImage.FillMethod.Vertical:
-                            m_FillOrigin.intValue = (int)(AtlasImage.OriginVertical)EditorGUILayout.EnumPopup("Fill Origin", (AtlasImage.OriginVertical)m_FillOrigin.intValue);
+                        case Image.FillMethod.Vertical:
+                            m_FillOrigin.intValue = (int)(Image.OriginVertical)EditorGUILayout.EnumPopup("Fill Origin", (Image.OriginVertical)m_FillOrigin.intValue);
                             break;
-                        case AtlasImage.FillMethod.Radial90:
-                            m_FillOrigin.intValue = (int)(AtlasImage.Origin90)EditorGUILayout.EnumPopup("Fill Origin", (AtlasImage.Origin90)m_FillOrigin.intValue);
+                        case Image.FillMethod.Radial90:
+                            m_FillOrigin.intValue = (int)(Image.Origin90)EditorGUILayout.EnumPopup("Fill Origin", (Image.Origin90)m_FillOrigin.intValue);
                             break;
-                        case AtlasImage.FillMethod.Radial180:
-                            m_FillOrigin.intValue = (int)(AtlasImage.Origin180)EditorGUILayout.EnumPopup("Fill Origin", (AtlasImage.Origin180)m_FillOrigin.intValue);
+                        case Image.FillMethod.Radial180:
+                            m_FillOrigin.intValue = (int)(Image.Origin180)EditorGUILayout.EnumPopup("Fill Origin", (Image.Origin180)m_FillOrigin.intValue);
                             break;
-                        case AtlasImage.FillMethod.Radial360:
-                            m_FillOrigin.intValue = (int)(AtlasImage.Origin360)EditorGUILayout.EnumPopup("Fill Origin", (AtlasImage.Origin360)m_FillOrigin.intValue);
+                        case Image.FillMethod.Radial360:
+                            m_FillOrigin.intValue = (int)(Image.Origin360)EditorGUILayout.EnumPopup("Fill Origin", (Image.Origin360)m_FillOrigin.intValue);
                             break;
                     }
                     EditorGUILayout.PropertyField(m_FillAmount);
-                    if ((AtlasImage.FillMethod)m_FillMethod.enumValueIndex > AtlasImage.FillMethod.Vertical)
+                    if ((Image.FillMethod)m_FillMethod.enumValueIndex > Image.FillMethod.Vertical)
                     {
                         EditorGUILayout.PropertyField(m_FillClockwise, m_ClockwiseContent);
                     }
@@ -242,7 +242,7 @@ namespace AtlaS.UI
 
         public override void OnPreviewGUI(Rect rect, GUIStyle background)
         {
-            AtlasImage image = target as AtlasImage;
+            Image image = target as Image;
             if (image == null) return;
 
             Sprite sf = image.sprite;
@@ -257,7 +257,7 @@ namespace AtlaS.UI
 
         public override string GetInfoString()
         {
-            AtlasImage image = target as AtlasImage;
+            Image image = target as Image;
             Sprite sprite = image.sprite;
 
             int x = (sprite != null) ? Mathf.RoundToInt(sprite.rect.width) : 0;
@@ -268,12 +268,12 @@ namespace AtlaS.UI
 
         bool CheckAnySpriteIsNull()
         {
-            return targets.Any(target => (target as AtlasImage).sprite == null);
+            return targets.Any(target => (target as Image).sprite == null);
         }
 
         bool CheckAllSpriteIsNull()
         {
-            return targets.All(target => (target as AtlasImage).sprite == null);
+            return targets.All(target => (target as Image).sprite == null);
         }
     }
 }

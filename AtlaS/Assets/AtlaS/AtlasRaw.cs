@@ -120,11 +120,6 @@ namespace AtlaS
         public int bin;
 
         /// <summary>
-        /// Unique id.
-        /// </summary>
-        public ushort id;
-
-        /// <summary>
         /// Sprite asset name.
         /// </summary>
         public string name;

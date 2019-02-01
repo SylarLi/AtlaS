@@ -15,7 +15,6 @@ namespace AtlaS
                 rawQuality = bin.quality,
                 transparency = bin.transparency,
                 quality = bin.quality,
-                id = sprite.id,
                 name = sprite.name,
                 rect = sprite.rect,
                 border = sprite.border,
@@ -144,8 +143,6 @@ namespace AtlaS
         public Vector4 border { get; set; }
 
         public Vector2 pivot { get; set; }
-
-        public ushort id { get; set; }
 
         public AtlasPackSprite()
         {

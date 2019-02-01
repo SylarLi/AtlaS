@@ -7,37 +7,33 @@ namespace AtlaS.UI
     {
         private static Dictionary<AtlasRaw, AtlasSpriteSet> mSpriteSet = new Dictionary<AtlasRaw, AtlasSpriteSet>();
 
-        private static Dictionary<AtlasRaw, AtlasMaterialSet> mMaterialSet = new Dictionary<AtlasRaw, AtlasMaterialSet>();
+        private static Material mAlphaSplitCanvasMaterial;
 
-        public static Sprite RegisterAtlasSprite(AtlasRaw atlasRaw, string sprite)
+        public static Sprite RetrieveAtlasSprite(AtlasRaw atlasRaw, string spriteRawName)
         {
-#if UNITY_EDITOR
-            return new AtlasSpriteSet(atlasRaw).FindSprite(sprite);
-#else
             if (!mSpriteSet.ContainsKey(atlasRaw))
             {
                 mSpriteSet.Add(atlasRaw, new AtlasSpriteSet(atlasRaw));
                 atlasRaw.RegisterDestroyCallBack(OnAtlasRawDestroyed);
             }
-            return mSpriteSet[atlasRaw].FindSprite(sprite);
-#endif
+            return mSpriteSet[atlasRaw].FindSprite(spriteRawName);
         }
 
-        public static Material RegisterAtlasMaterial(AtlasRaw atlasRaw, string sprite)
+        public static Material GetAlphaSplitCanvasMaterial()
         {
-#if UNITY_EDITOR
-            var spriteRaw = atlasRaw.FindSprite(sprite);
-            return spriteRaw == null ? null :
-                new AtlasMaterialSet(atlasRaw).FindMaterial(spriteRaw.bin);
-#else
-            if (!mMaterialSet.ContainsKey(atlasRaw))
+            if (mAlphaSplitCanvasMaterial == null)
             {
-                mMaterialSet.Add(atlasRaw, new AtlasMaterialSet(atlasRaw));
+                mAlphaSplitCanvasMaterial = new Material(Shader.Find("AtlaS/Default"));
+                mAlphaSplitCanvasMaterial.hideFlags = HideFlags.DontUnloadUnusedAsset;
+                mAlphaSplitCanvasMaterial.EnableKeyword("ATLAS_UI_ALPHASPLIT");
             }
-            var spriteRaw = atlasRaw.FindSprite(sprite);
-            return spriteRaw == null ? null :
-                mMaterialSet[atlasRaw].FindMaterial(spriteRaw.bin);
-#endif
+            return mAlphaSplitCanvasMaterial;
+        }
+
+        public static void Clear()
+        {
+            mSpriteSet.Clear();
+            mAlphaSplitCanvasMaterial = null;
         }
 
         private static void OnAtlasRawDestroyed(AtlasRaw atlasRaw)
@@ -46,11 +42,6 @@ namespace AtlaS.UI
             {
                 mSpriteSet[atlasRaw].Dispose();
                 mSpriteSet.Remove(atlasRaw);
-            }
-            if (mMaterialSet.ContainsKey(atlasRaw))
-            {
-                mMaterialSet[atlasRaw].Dispose();
-                mMaterialSet.Remove(atlasRaw);
             }
         }
 
@@ -66,22 +57,17 @@ namespace AtlaS.UI
                 mSprites = new Dictionary<string, Sprite>();
             }
 
-            public Sprite FindSprite(string spriteName)
+            public Sprite FindSprite(string spriteRawName)
             {
-                if (mSprites.ContainsKey(spriteName))
+                if (mSprites.ContainsKey(spriteRawName))
                 {
-                    return mSprites[spriteName];
+                    return mSprites[spriteRawName];
                 }
-                var spriteRaw = mAtlasRaw.FindSprite(spriteName);
+                var spriteRaw = mAtlasRaw.FindSprite(spriteRawName);
                 if (spriteRaw != null)
                 {
-                    var bin = mAtlasRaw.bins[spriteRaw.bin];
-                    var sprite = Sprite.Create(
-                        bin.main, spriteRaw.rect, spriteRaw.pivot, 100, 1,
-                        SpriteMeshType.Tight, spriteRaw.border);
-                    sprite.hideFlags = HideFlags.DontUnloadUnusedAsset;
-                    sprite.name = spriteRaw.name;
-                    mSprites[spriteRaw.name] = sprite;
+                    var sprite = Sprite.Create(mAtlasRaw, spriteRaw);
+                    mSprites[sprite.name] = sprite;
                     return sprite;
                 }
                 return null;
@@ -89,74 +75,7 @@ namespace AtlaS.UI
 
             public void Dispose()
             {
-                foreach (var sprite in mSprites)
-                {
-                    if (sprite.Value != null)
-                    {
-#if UNITY_EDITOR
-                        Object.DestroyImmediate(sprite.Value);
-#else
-                        Object.Destroy(sprite.Value);
-#endif
-                    }
-                }
                 mSprites = null;
-                mAtlasRaw = null;
-            }
-        }
-
-        private class AtlasMaterialSet
-        {
-            private AtlasRaw mAtlasRaw;
-
-            private Material[] mMaterials;
-
-            public AtlasMaterialSet(AtlasRaw atlasRaw)
-            {
-                mAtlasRaw = atlasRaw;
-                mMaterials = new Material[mAtlasRaw.bins.Length];
-            }
-
-            public Material FindMaterial(int binIndex)
-            {
-                if (binIndex >= 0 && 
-                    binIndex < mMaterials.Length)
-                {
-                    var material = mMaterials[binIndex];
-                    if (material == null)
-                    {
-                        var binRaw = mAtlasRaw.bins[binIndex];
-                        material = new Material(Shader.Find("AtlaS/Default"));
-                        material.hideFlags = HideFlags.DontUnloadUnusedAsset;
-                        material.SetTexture("_MainTex", binRaw.main);
-                        if ((binRaw.quality == BinRaw.Quality.Normal ||
-                            binRaw.quality == BinRaw.Quality.RGB16A4) &&
-                            binRaw.transparency &&
-                            binRaw.addition != null)
-                        {
-                            material.SetTexture("_AlphaTex", binRaw.addition);
-                            material.EnableKeyword("ATLAS_UI_ALPHASPLIT");
-                        }
-                    }
-                    return material;
-                }
-                return null;
-            }
-
-            public void Dispose()
-            {
-                foreach (var material in mMaterials)
-                {
-                    if (material != null)
-                    {
-#if UNITY_EDITOR
-                        Object.DestroyImmediate(material);
-#else
-                        Object.Destroy(material);
-#endif
-                    }
-                }
-                mMaterials = null;
                 mAtlasRaw = null;
             }
         }

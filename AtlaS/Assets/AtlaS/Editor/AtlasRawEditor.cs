@@ -83,6 +83,7 @@ namespace AtlaS
         public override void OnInspectorGUI()
         {
             var atlas = target as AtlasRaw;
+            mSelectedBin = Mathf.Clamp(mSelectedBin, 0, atlas.bins.Length - 1);
             for (int i = mSelectedSprites.Count - 1; i >= 0; i--)
             {
                 if (mSelectedSprites[i].bin >= atlas.bins.Length ||
@@ -184,18 +185,27 @@ namespace AtlaS
             {
                 var bin = atlas.bins[mSelectedSprites[0].bin];
                 var sprite = bin.sprites[mSelectedSprites[0].sprite];
+                var rect = sprite.rect;
                 var border = sprite.border;
                 var previewRect = DrawSpriteInRect(bin.main, bin.addition, sprite, r, new Vector2(100, 100));
                 var controlID = GUIUtility.GetControlID(FocusType.Passive);
                 var eventType = Event.current.GetTypeForControl(controlID);
                 if (mSpriteBorder)
                 {
+                    var borderScale = new Vector2(
+                        previewRect.width / rect.width,
+                        previewRect.height / rect.height);
+                    var scaledBorder = new Vector4(
+                        border.x * borderScale.x,
+                        border.y * borderScale.y,
+                        border.z * borderScale.x,
+                        border.w * borderScale.y);
                     var lines = new Rect[]
                     {
-                        new Rect(r.x, previewRect.y + border.w, r.width, 1),
-                        new Rect(r.x, previewRect.yMax - border.y - 1, r.width, 1),
-                        new Rect(previewRect.x + border.x, r.y, 1, r.height),
-                        new Rect(previewRect.xMax - border.z - 1, r.y, 1, r.height),
+                        new Rect(r.x, previewRect.y + scaledBorder.w, r.width, 1),
+                        new Rect(r.x, previewRect.yMax - scaledBorder.y - 1, r.width, 1),
+                        new Rect(previewRect.x + scaledBorder.x, r.y, 1, r.height),
+                        new Rect(previewRect.xMax - scaledBorder.z - 1, r.y, 1, r.height),
                     };
                     foreach (var line in lines)
                     {
@@ -231,12 +241,15 @@ namespace AtlaS
                                 if (GUIUtility.hotControl == controlID &&
                                     r.Contains(Event.current.mousePosition))
                                 {
+                                    var delta = Event.current.delta;
+                                    delta.x *= 1 / borderScale.x;
+                                    delta.y *= 1 / borderScale.y;
                                     var index = GUIUtility.GetStateObject(typeof(List<int>), controlID) as List<int>;
                                     var i = index[0];
-                                    if (i == 0) border.w = Mathf.Clamp(border.w + Event.current.delta.y, 0, previewRect.height);
-                                    else if (i == 1) border.y = Mathf.Clamp(border.y - Event.current.delta.y, 0, previewRect.height);
-                                    else if (i == 2) border.x = Mathf.Clamp(border.x + Event.current.delta.x, 0, previewRect.width);
-                                    else if (i == 3) border.z = Mathf.Clamp(border.z - Event.current.delta.x, 0, previewRect.width);
+                                    if (i == 0) border.w = Mathf.Clamp(border.w + delta.y, 0, rect.height);
+                                    else if (i == 1) border.y = Mathf.Clamp(border.y - delta.y, 0, rect.height);
+                                    else if (i == 2) border.x = Mathf.Clamp(border.x + delta.x, 0, rect.width);
+                                    else if (i == 3) border.z = Mathf.Clamp(border.z - delta.x, 0, rect.width);
                                     sprite.border = border;
                                     EditorUtility.SetDirty(atlas);
                                     Event.current.Use();
@@ -263,6 +276,7 @@ namespace AtlaS
                 }
                 if (GUI.Button(new Rect(r.x, r.y, 60, toolbarh), "Save", EditorStyles.toolbarButton))
                 {
+                    UI.AtlasRegistry.Clear();
                     AssetDatabase.SaveAssets();
                 }
                 EditorGUI.LabelField(new Rect(r.x + r.width - 320, r.y, 40, toolbarh), "Name", EditorStyles.miniLabel);
@@ -747,7 +761,7 @@ namespace AtlaS
                 var sprite = bin.sprites[selectedSprite.sprite];
                 for (int i = list.Count - 1; i >= 0; i--)
                 {
-                    if (list[i].id == sprite.id)
+                    if (string.Equals(list[i].name, sprite.name))
                     {
                         list.RemoveAt(i);
                     }
@@ -766,7 +780,7 @@ namespace AtlaS
                 var sprite = bin.sprites[selectedSprite.sprite];
                 foreach (var packSprite in list)
                 {
-                    if (packSprite.id == sprite.id &&
+                    if (string.Equals(packSprite.name, sprite.name) &&
                         packSprite.quality != quality)
                     {
                         packSprite.quality = quality;
@@ -803,7 +817,7 @@ namespace AtlaS
             menu.ShowAsContext();
         }
 
-        private void AddFiles(AtlasRaw atlas, BinRaw.Quality quality, string[] files, bool replaceSpriteByName = false)
+        private void AddFiles(AtlasRaw atlas, BinRaw.Quality quality, string[] files, bool replaceSpriteByName = true)
         {
             var textures = new List<AtlasPackSprite>(AtlasPackSprite.ListSprites(atlas));
             Action<AtlasPackSprite> addTexture = (texture) =>

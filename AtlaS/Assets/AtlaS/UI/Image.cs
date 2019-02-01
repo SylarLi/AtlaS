@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace AtlaS.UI
 {
-    [AddComponentMenu("UI/AtlasImage", 1001)]
-    public class AtlasImage : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement, ICanvasRaycastFilter
+    [AddComponentMenu("Atlas/UI/Image", 1)]
+    public class Image : MaskableGraphic, ISerializationCallbackReceiver, ILayoutElement, ICanvasRaycastFilter
     {
         public enum Type
         {
@@ -61,77 +61,11 @@ namespace AtlaS.UI
             Left,
         }
 
-        static protected Material s_ETC1DefaultUI = null;
-
-        [SerializeField]
-        private AtlasRaw mAtlasRaw;
-
-        public AtlasRaw atlasRaw
-        {
-            get
-            {
-                return mAtlasRaw;
-            }
-            set
-            {
-                if (mAtlasRaw != value)
-                {
-                    mAtlasRaw = value;
-                    SetAllDirty();
-                }
-            }
-        }
-
-        [SerializeField]
-        private string mSpriteRaw;
-
-        public string spriteRaw
-        {
-            get
-            {
-                return mSpriteRaw;
-            }
-            set
-            {
-                if (mSpriteRaw != value)
-                {
-                    mSpriteRaw = value;
-                    SetAllDirty();
-                }
-            }
-        }
-
-        private Sprite mAtlasSprite;
-
-        private Material mAtlasMaterial;
-
-        private bool mAtlasDirty = false;
+        private static Material mAlphaSplitMaterial;
 
         [NonSerialized]
         private Sprite m_Sprite;
-        public Sprite sprite
-        {
-            get
-            {
-                return mAtlasSprite != null ?
-                    mAtlasSprite : m_Sprite;
-            }
-            set
-            {
-                if (m_Sprite != value)
-                {
-                    m_Sprite = value;
-                    SetAllDirty();
-                }
-                if (atlasRaw != null ||
-                    !string.IsNullOrEmpty(spriteRaw))
-                {
-                    atlasRaw = null;
-                    spriteRaw = null;
-                    SetAllDirty();
-                }
-            }
-        }
+        public Sprite sprite { get { return m_Sprite != null ? m_Sprite : mAtlasSprite; } set { if (m_Sprite != value) { m_Sprite = value; SetAllDirty(); } } }
 
         [NonSerialized]
         private Sprite m_OverrideSprite;
@@ -180,7 +114,19 @@ namespace AtlaS.UI
         public float eventAlphaThreshold { get { return 1 - alphaHitTestMinimumThreshold; } set { alphaHitTestMinimumThreshold = 1 - value; } }
         public float alphaHitTestMinimumThreshold { get { return m_AlphaHitTestMinimumThreshold; } set { m_AlphaHitTestMinimumThreshold = value; } }
 
-        protected AtlasImage()
+        [SerializeField]
+        private AtlasRaw mAtlasRaw;
+        public AtlasRaw atlasRaw { get { return mAtlasRaw; } set { if (mAtlasRaw != value) { mAtlasRaw = value; RetrieveAtlasSprite(); } } }
+
+        [SerializeField]
+        private string mSpriteRawName;
+        public string spriteRawName { get { return mSpriteRawName; } set { if (mSpriteRawName != value) { mSpriteRawName = value; RetrieveAtlasSprite(); } } }
+
+        [NonSerialized]
+        private Sprite mAtlasSprite;
+        public Sprite atlasSprite { get { return mAtlasSprite; } set { if (mAtlasSprite != value) { mAtlasSprite = value; SetAllDirty(); } } }
+
+        protected Image()
         {
             useLegacyMeshGeneration = false;
         }
@@ -188,14 +134,13 @@ namespace AtlaS.UI
         /// <summary>
         /// Default material used to draw everything if no explicit material was specified.
         /// </summary>
-
-        static public Material defaultETC1GraphicMaterial
+        static public Material defaultAlphaSplitMaterial
         {
             get
             {
-                if (s_ETC1DefaultUI == null)
-                    s_ETC1DefaultUI = Canvas.GetETC1SupportedCanvasMaterial();
-                return s_ETC1DefaultUI;
+                if (mAlphaSplitMaterial == null)
+                    mAlphaSplitMaterial = AtlasRegistry.GetAlphaSplitCanvasMaterial();
+                return mAlphaSplitMaterial;
             }
         }
 
@@ -206,11 +151,6 @@ namespace AtlaS.UI
         {
             get
             {
-                if (mAtlasMaterial != null)
-                {
-                    return mAtlasMaterial.mainTexture;
-                }
-
                 if (activeSprite == null)
                 {
                     if (material != null && material.mainTexture != null)
@@ -220,7 +160,7 @@ namespace AtlaS.UI
                     return s_WhiteTexture;
                 }
 
-                return activeSprite.texture;
+                return activeSprite.main;
             }
         }
 
@@ -246,7 +186,7 @@ namespace AtlaS.UI
             get
             {
                 float spritePixelsPerUnit = 100;
-                if (activeSprite)
+                if (activeSprite != null)
                     spritePixelsPerUnit = activeSprite.pixelsPerUnit;
 
                 float referencePixelsPerUnit = 100;
@@ -264,8 +204,8 @@ namespace AtlaS.UI
                 if (m_Material != null)
                     return m_Material;
 
-                if (activeSprite && activeSprite.associatedAlphaSplitTexture != null)
-                    return defaultETC1GraphicMaterial;
+                if (activeSprite != null && activeSprite.addition != null)
+                    return defaultAlphaSplitMaterial;
 
                 return defaultMaterial;
             }
@@ -295,7 +235,7 @@ namespace AtlaS.UI
         /// Image's dimensions used for drawing. X = left, Y = bottom, Z = right, W = top.
         private Vector4 GetDrawingDimensions(bool shouldPreserveAspect)
         {
-            var padding = activeSprite == null ? Vector4.zero : UnityEngine.Sprites.DataUtility.GetPadding(activeSprite);
+            var padding = activeSprite == null ? Vector4.zero : SpriteUtility.GetPadding(activeSprite);
             var size = activeSprite == null ? Vector2.zero : new Vector2(activeSprite.rect.width, activeSprite.rect.height);
 
             Rect r = GetPixelAdjustedRect();
@@ -391,26 +331,20 @@ namespace AtlaS.UI
             canvasRenderer.materialCount = 1;
             canvasRenderer.SetMaterial(materialForRendering, 0);
             canvasRenderer.SetTexture(mainTexture);
-            if (mAtlasMaterial != null)
+
+            // check if this sprite has an associated alpha texture (generated when splitting RGBA = RGB + A as two textures without alpha)
+
+            if (activeSprite == null)
             {
                 canvasRenderer.SetAlphaTexture(null);
+                return;
             }
-            else
+
+            Texture2D alphaTex = activeSprite.addition;
+
+            if (alphaTex != null)
             {
-                // check if this sprite has an associated alpha texture (generated when splitting RGBA = RGB + A as two textures without alpha)
-
-                if (activeSprite == null)
-                {
-                    canvasRenderer.SetAlphaTexture(null);
-                    return;
-                }
-
-                Texture2D alphaTex = activeSprite.associatedAlphaSplitTexture;
-
-                if (alphaTex != null)
-                {
-                    canvasRenderer.SetAlphaTexture(alphaTex);
-                }
+                canvasRenderer.SetAlphaTexture(alphaTex);
             }
         }
 
@@ -420,7 +354,7 @@ namespace AtlaS.UI
         void GenerateSimpleSprite(VertexHelper vh, bool lPreserveAspect)
         {
             Vector4 v = GetDrawingDimensions(lPreserveAspect);
-            var uv = (activeSprite != null) ? UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+            var uv = (activeSprite != null) ? SpriteUtility.GetOuterUV(activeSprite) : Vector4.zero;
 
             var color32 = color;
             vh.Clear();
@@ -452,9 +386,9 @@ namespace AtlaS.UI
 
             if (activeSprite != null)
             {
-                outer = UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite);
-                inner = UnityEngine.Sprites.DataUtility.GetInnerUV(activeSprite);
-                padding = UnityEngine.Sprites.DataUtility.GetPadding(activeSprite);
+                outer = SpriteUtility.GetOuterUV(activeSprite);
+                inner = SpriteUtility.GetInnerUV(activeSprite);
+                padding = SpriteUtility.GetPadding(activeSprite);
                 border = activeSprite.border;
             }
             else
@@ -524,8 +458,8 @@ namespace AtlaS.UI
 
             if (activeSprite != null)
             {
-                outer = UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite);
-                inner = UnityEngine.Sprites.DataUtility.GetInnerUV(activeSprite);
+                outer = SpriteUtility.GetOuterUV(activeSprite);
+                inner = SpriteUtility.GetInnerUV(activeSprite);
                 border = activeSprite.border;
                 spriteSize = activeSprite.rect.size;
             }
@@ -561,7 +495,7 @@ namespace AtlaS.UI
             if (tileHeight <= 0)
                 tileHeight = yMax - yMin;
 
-            if (activeSprite != null && (hasBorder || activeSprite.packed || activeSprite.texture.wrapMode != TextureWrapMode.Repeat))
+            if (activeSprite != null)
             {
                 // Sprite has border, or is not in repeat mode, or cannot be repeated because of packing.
                 // We cannot use texture tiling so we will generate a mesh of quads to tile the texture.
@@ -830,7 +764,7 @@ namespace AtlaS.UI
                 return;
 
             Vector4 v = GetDrawingDimensions(preserveAspect);
-            Vector4 outer = activeSprite != null ? UnityEngine.Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+            Vector4 outer = activeSprite != null ? SpriteUtility.GetOuterUV(activeSprite) : Vector4.zero;
             UIVertex uiv = UIVertex.simpleVert;
             uiv.color = color;
 
@@ -1142,7 +1076,7 @@ namespace AtlaS.UI
                 if (activeSprite == null)
                     return 0;
                 if (type == Type.Sliced || type == Type.Tiled)
-                    return UnityEngine.Sprites.DataUtility.GetMinSize(activeSprite).x / pixelsPerUnit;
+                    return SpriteUtility.GetMinSize(activeSprite).x / pixelsPerUnit;
                 return activeSprite.rect.size.x / pixelsPerUnit;
             }
         }
@@ -1158,7 +1092,7 @@ namespace AtlaS.UI
                 if (activeSprite == null)
                     return 0;
                 if (type == Type.Sliced || type == Type.Tiled)
-                    return UnityEngine.Sprites.DataUtility.GetMinSize(activeSprite).y / pixelsPerUnit;
+                    return SpriteUtility.GetMinSize(activeSprite).y / pixelsPerUnit;
                 return activeSprite.rect.size.y / pixelsPerUnit;
             }
         }
@@ -1191,16 +1125,16 @@ namespace AtlaS.UI
             local = MapCoordinate(local, rect);
 
             // Normalize local coordinates.
-            Rect spriteRect = activeSprite.textureRect;
+            Rect spriteRect = activeSprite.rect;
             Vector2 normalized = new Vector2(local.x / spriteRect.width, local.y / spriteRect.height);
 
             // Convert to texture space.
-            float x = Mathf.Lerp(spriteRect.x, spriteRect.xMax, normalized.x) / activeSprite.texture.width;
-            float y = Mathf.Lerp(spriteRect.y, spriteRect.yMax, normalized.y) / activeSprite.texture.height;
+            float x = Mathf.Lerp(spriteRect.x, spriteRect.xMax, normalized.x) / activeSprite.main.width;
+            float y = Mathf.Lerp(spriteRect.y, spriteRect.yMax, normalized.y) / activeSprite.main.height;
 
             try
             {
-                return activeSprite.texture.GetPixelBilinear(x, y).a >= alphaHitTestMinimumThreshold;
+                return activeSprite.main.GetPixelBilinear(x, y).a >= alphaHitTestMinimumThreshold;
             }
             catch (UnityException e)
             {
@@ -1247,57 +1181,30 @@ namespace AtlaS.UI
             return local;
         }
 
-        public override void SetAllDirty()
+        protected override void OnEnable()
         {
-            SetAtlasDirty();
-            base.SetAllDirty();
+            base.OnEnable();
+            RetrieveAtlasSprite();
         }
 
-        public void SetAtlasDirty()
+#if UNITY_EDITOR
+        protected override void OnValidate()
         {
-            if (!IsActive())
-                return;
-            mAtlasDirty = true;
+            base.OnValidate();
+            RetrieveAtlasSprite();
         }
 
-        public override void Rebuild(CanvasUpdate update)
+        protected override void Reset()
         {
-            if (canvasRenderer.cull)
-                return;
-            switch (update)
-            {
-                case CanvasUpdate.PreRender:
-                    {
-                        if (mAtlasDirty)
-                        {
-                            UpdateAtlas();
-                            mAtlasDirty = false;
-                        }
-                        break;
-                    }
-            }
-            base.Rebuild(update);
+            base.Reset();
+            RetrieveAtlasSprite();
         }
+#endif
 
-        private void UpdateAtlas()
+        private void RetrieveAtlasSprite()
         {
-            mAtlasSprite = null;
-            mAtlasMaterial = null;
-            if (atlasRaw != null &&
-                !string.IsNullOrEmpty(spriteRaw))
-            {
-                mAtlasSprite = AtlasRegistry.RegisterAtlasSprite(atlasRaw, spriteRaw);
-                mAtlasMaterial = AtlasRegistry.RegisterAtlasMaterial(atlasRaw, spriteRaw);
-            }
-        }
-
-        public override Material defaultMaterial
-        {
-            get
-            {
-                return mAtlasMaterial != null ?
-                    mAtlasMaterial : base.defaultMaterial;
-            }
+            atlasSprite = atlasRaw != null && !string.IsNullOrEmpty(spriteRawName) ?
+                AtlasRegistry.RetrieveAtlasSprite(atlasRaw, spriteRawName) : null;
         }
     }
 }

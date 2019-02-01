@@ -123,7 +123,6 @@ namespace AtlaS
                     var texRect = texList[i].rect;
                     var spriteRaw = spriteRaws[i];
                     spriteRaw.name = texName;
-                    spriteRaw.id = texList[i].id;
                     spriteRaw.border = texList[i].border;
                     spriteRaw.pivot = texList[i].pivot;
                     var rect = spriteRaw.rect;
@@ -234,56 +233,12 @@ namespace AtlaS
 
         private static void GenerateAtlasData(AtlasRaw atlasRaw)
         {
-            var spriteList = new List<SpriteRaw>();
-            var consumedIds = new HashSet<int>();
             var bins = atlasRaw.bins;
             for (int i = 0; i < bins.Length; i++)
             {
                 foreach (var sprite in bins[i].sprites)
                 {
                     sprite.bin = i;
-                    spriteList.Add(sprite);
-                    if (sprite.id > 0)
-                    {
-                        consumedIds.Add(sprite.id);
-                    }
-                }
-            }
-            foreach (var sprite in spriteList)
-            {
-                if (sprite.id == 0)
-                {
-                    ushort id = 1;
-                    while (id++ < MaxNumberOfSpriteInAtlas)
-                    {
-                        if (!consumedIds.Contains(id))
-                        {
-                            consumedIds.Add(id);
-                            sprite.id = id;
-                            break;
-                        }
-                    }
-                }
-            }
-            var repeatIds = new HashSet<int>();
-            foreach (var sprite in spriteList)
-            {
-                if (repeatIds.Contains(sprite.id))
-                {
-                    ushort id = 1;
-                    while (id++ < MaxNumberOfSpriteInAtlas)
-                    {
-                        if (!consumedIds.Contains(id))
-                        {
-                            consumedIds.Add(id);
-                            sprite.id = id;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    repeatIds.Add(sprite.id);
                 }
             }
             if (atlasRaw.id == 0)
@@ -424,6 +379,8 @@ namespace AtlaS
             atlasRaw.forceSquare = packData.forceSquare;
             GenerateAtlasData(atlasRaw);
             EditorUtility.SetDirty(atlasRaw);
+
+            UI.AtlasRegistry.Clear();
             AssetDatabase.SaveAssets();
 
             EditorUtility.ClearProgressBar();
@@ -468,6 +425,7 @@ namespace AtlaS
                     break;
                 }
             }
+            EditorUtility.ClearProgressBar();
             RevertAtlasTextures(atlas);
         }
 
