@@ -372,6 +372,7 @@ namespace UnityEditor.UI.Atlas
             RemoveAtlasTextures(atlasRaw);
             var atlasPath = AssetDatabase.GetAssetPath(atlasRaw);
             SaveAtlasTextures(newAtlasRaw, atlasPath);
+            foreach (var bin in atlasRaw.bins) bin.Dispose();
             atlasRaw.bins = newAtlasRaw.bins;
             atlasRaw.maxSize = packData.maxAtlasSize;
             atlasRaw.padding = packData.padding;

@@ -650,9 +650,10 @@ namespace UnityEditor.UI.Atlas
 
         private void DrawTexture(Rect rect, Texture2D mainTex, Texture2D alphaTex, Rect clipRect, Rect uvRect)
         {
-            mPreviewMat = mPreviewMat ?? new Material(Shader.Find("UI/DefaultETC1"));
+            mPreviewMat = mPreviewMat ?? new Material(Shader.Find("UI/Default"));
+            mPreviewMat.shader = Shader.Find(alphaTex != null ? "UI/DefaultETC1" : "UI/Default");
             mPreviewMat.SetTexture("_MainTex", mainTex);
-            mPreviewMat.SetTexture("_AlphaTex", alphaTex);
+            if (alphaTex != null) mPreviewMat.SetTexture("_AlphaTex", alphaTex);
             mPreviewMat.SetVector("_ClipRect", clipRect.width > 0 ?
                 new Vector4(clipRect.x, clipRect.y, clipRect.xMax, clipRect.yMax) :
                 new Vector4(0, 0, float.MaxValue, float.MaxValue));
