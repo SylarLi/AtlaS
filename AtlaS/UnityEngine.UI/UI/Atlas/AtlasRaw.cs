@@ -50,6 +50,15 @@ namespace UnityEngine.UI.Atlas
                 mDestoryCallBacks = null;
             }
         }
+
+        public void Dispose()
+        {
+            foreach (var bin in bins)
+            {
+                bin.Dispose();
+            }
+            bins = null;
+        }
     }
 
     [Serializable]
@@ -108,6 +117,20 @@ namespace UnityEngine.UI.Atlas
             }
             return null;
         }
+
+        public void Dispose()
+        {
+            if (sprites != null)
+            {
+                foreach (var sprite in sprites)
+                {
+                    sprite.Dispose();
+                }
+                sprites = null;
+            }
+            main = null;
+            addition = null;
+        }
     }
 
     [Serializable]
@@ -137,5 +160,41 @@ namespace UnityEngine.UI.Atlas
         /// Sprite's pivot
         /// </summary>
         public Vector2 pivot;
+
+        public void Dispose()
+        {
+            bin = -1;
+            name = null;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            SpriteRaw s = (SpriteRaw)obj;
+            if (ReferenceEquals(s, null) || s.IsNull())
+                return IsNull();
+            return ReferenceEquals(this, s);
+        }
+
+        public static bool operator ==(SpriteRaw s1, SpriteRaw s2)
+        {
+            if (ReferenceEquals(s1, null))
+                return ReferenceEquals(s2, null);
+            return s1.Equals(s2);
+        }
+
+        public static bool operator !=(SpriteRaw s1, SpriteRaw s2)
+        {
+            return !(s1 == s2);
+        }
+
+        private bool IsNull()
+        {
+            return bin < 0 || string.IsNullOrEmpty(name);
+        }
     }
 }
