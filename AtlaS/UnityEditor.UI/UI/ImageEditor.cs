@@ -2,6 +2,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEditor.AnimatedValues;
 using UnityEngine.UI;
+using Sprite = UnityEngine.UI.Sprite;
 
 namespace UnityEditor.UI
 {
@@ -47,7 +48,7 @@ namespace UnityEditor.UI
             m_FillAmount            = serializedObject.FindProperty("m_FillAmount");
             m_PreserveAspect        = serializedObject.FindProperty("m_PreserveAspect");
 
-            m_ShowType = new AnimBool(m_Sprite.objectReferenceValue != null);
+            m_ShowType = new AnimBool(!CheckSpriteIsNull(m_Sprite));
             m_ShowType.valueChanged.AddListener(Repaint);
 
             var typeEnum = (Image.Type)m_Type.enumValueIndex;
@@ -81,7 +82,7 @@ namespace UnityEditor.UI
             AppearanceControlsGUI();
             RaycastControlsGUI();
 
-            m_ShowType.target = m_Sprite.objectReferenceValue != null;
+            m_ShowType.target = !CheckSpriteIsNull(m_Sprite);
             if (EditorGUILayout.BeginFadeGroup(m_ShowType.faded))
                 TypeGUI();
             EditorGUILayout.EndFadeGroup();
@@ -102,7 +103,7 @@ namespace UnityEditor.UI
         void SetShowNativeSize(bool instant)
         {
             Image.Type type = (Image.Type)m_Type.enumValueIndex;
-            bool showNativeSize = (type == Image.Type.Simple || type == Image.Type.Filled) && m_Sprite.objectReferenceValue != null;
+            bool showNativeSize = (type == Image.Type.Simple || type == Image.Type.Filled) && !CheckSpriteIsNull(m_Sprite);
             base.SetShowNativeSize(showNativeSize, instant);
         }
 
@@ -116,17 +117,21 @@ namespace UnityEditor.UI
             EditorGUILayout.PropertyField(m_Sprite, m_SpriteContent);
             if (EditorGUI.EndChangeCheck())
             {
-                var newSprite = m_Sprite.objectReferenceValue as Sprite;
-                if (newSprite)
+                foreach (var target in targets)
                 {
-                    Image.Type oldType = (Image.Type)m_Type.enumValueIndex;
-                    if (newSprite.border.SqrMagnitude() > 0)
+                    var atlasImage = target as Image;
+                    var newSprite = atlasImage.sprite;
+                    if (newSprite != null)
                     {
-                        m_Type.enumValueIndex = (int)Image.Type.Sliced;
-                    }
-                    else if (oldType == Image.Type.Sliced)
-                    {
-                        m_Type.enumValueIndex = (int)Image.Type.Simple;
+                        Image.Type oldType = atlasImage.type;
+                        if (newSprite.border.SqrMagnitude() > 0)
+                        {
+                            atlasImage.type = Image.Type.Sliced;
+                        }
+                        else if (oldType == Image.Type.Sliced)
+                        {
+                            atlasImage.type = Image.Type.Simple;
+                        }
                     }
                 }
             }
@@ -227,10 +232,11 @@ namespace UnityEditor.UI
             Image image = target as Image;
             if (image == null) return;
 
-            Sprite sf = image.sprite;
+            UnityEngine.UI.Sprite sf = image.sprite;
             if (sf == null) return;
 
-            SpriteDrawUtility.DrawSprite(sf, rect, image.canvasRenderer.GetColor());
+            if (sf.type == Sprite.Type.Sprite && sf.sprite != null)
+                SpriteDrawUtility.DrawSprite(sf.sprite, rect, image.canvasRenderer.GetColor());
         }
 
         /// <summary>
@@ -246,6 +252,16 @@ namespace UnityEditor.UI
             int y = (sprite != null) ? Mathf.RoundToInt(sprite.rect.height) : 0;
 
             return string.Format("Image Size: {0}x{1}", x, y);
+        }
+
+        private bool CheckSpriteIsNull(SerializedProperty property)
+        {
+            var type = (Sprite.Type)property.FindPropertyRelative("m_Type").enumValueIndex;
+            var sprite = property.FindPropertyRelative("m_Sprite");
+            var atlasRaw = property.FindPropertyRelative("m_AtlasRaw");
+            var spriteName = property.FindPropertyRelative("m_SpriteName");
+            return (type == Sprite.Type.Sprite && sprite.objectReferenceValue == null) ||
+                (type == Sprite.Type.Atlas && (atlasRaw.objectReferenceValue == null || string.IsNullOrEmpty(spriteName.stringValue)));
         }
     }
 }

@@ -26,13 +26,13 @@ namespace UnityEditor.UI
         {
             if (s_StandardResources.standard == null)
             {
-                s_StandardResources.standard = AssetDatabase.GetBuiltinExtraResource<Sprite>(kStandardSpritePath);
-                s_StandardResources.background = AssetDatabase.GetBuiltinExtraResource<Sprite>(kBackgroundSpritePath);
-                s_StandardResources.inputField = AssetDatabase.GetBuiltinExtraResource<Sprite>(kInputFieldBackgroundPath);
-                s_StandardResources.knob = AssetDatabase.GetBuiltinExtraResource<Sprite>(kKnobPath);
-                s_StandardResources.checkmark = AssetDatabase.GetBuiltinExtraResource<Sprite>(kCheckmarkPath);
-                s_StandardResources.dropdown = AssetDatabase.GetBuiltinExtraResource<Sprite>(kDropdownArrowPath);
-                s_StandardResources.mask = AssetDatabase.GetBuiltinExtraResource<Sprite>(kMaskPath);
+                s_StandardResources.standard = new UnityEngine.UI.Sprite(AssetDatabase.GetBuiltinExtraResource<UnityEngine.Sprite>(kStandardSpritePath));
+                s_StandardResources.background = new UnityEngine.UI.Sprite(AssetDatabase.GetBuiltinExtraResource<UnityEngine.Sprite>(kBackgroundSpritePath));
+                s_StandardResources.inputField = new UnityEngine.UI.Sprite(AssetDatabase.GetBuiltinExtraResource<UnityEngine.Sprite>(kInputFieldBackgroundPath));
+                s_StandardResources.knob = new UnityEngine.UI.Sprite(AssetDatabase.GetBuiltinExtraResource<UnityEngine.Sprite>(kKnobPath));
+                s_StandardResources.checkmark = new UnityEngine.UI.Sprite(AssetDatabase.GetBuiltinExtraResource<UnityEngine.Sprite>(kCheckmarkPath));
+                s_StandardResources.dropdown = new UnityEngine.UI.Sprite(AssetDatabase.GetBuiltinExtraResource<UnityEngine.Sprite>(kDropdownArrowPath));
+                s_StandardResources.mask = new UnityEngine.UI.Sprite(AssetDatabase.GetBuiltinExtraResource<UnityEngine.Sprite>(kMaskPath));
             }
             return s_StandardResources;
         }

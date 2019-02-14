@@ -172,7 +172,7 @@ namespace UnityEngine.UI
             get
             {
                 float spritePixelsPerUnit = 100;
-                if (activeSprite)
+                if (activeSprite != null)
                     spritePixelsPerUnit = activeSprite.pixelsPerUnit;
 
                 float referencePixelsPerUnit = 100;
@@ -190,7 +190,7 @@ namespace UnityEngine.UI
                 if (m_Material != null)
                     return m_Material;
 
-                if (activeSprite && activeSprite.associatedAlphaSplitTexture != null)
+                if (activeSprite != null && activeSprite.associatedAlphaSplitTexture != null)
                     return defaultETC1GraphicMaterial;
 
                 return defaultMaterial;
@@ -221,7 +221,7 @@ namespace UnityEngine.UI
         /// Image's dimensions used for drawing. X = left, Y = bottom, Z = right, W = top.
         private Vector4 GetDrawingDimensions(bool shouldPreserveAspect)
         {
-            var padding = activeSprite == null ? Vector4.zero : Sprites.DataUtility.GetPadding(activeSprite);
+            var padding = activeSprite == null ? Vector4.zero : SpriteUtility.GetPadding(activeSprite);
             var size = activeSprite == null ? Vector2.zero : new Vector2(activeSprite.rect.width, activeSprite.rect.height);
 
             Rect r = GetPixelAdjustedRect();
@@ -335,7 +335,7 @@ namespace UnityEngine.UI
         void GenerateSimpleSprite(VertexHelper vh, bool lPreserveAspect)
         {
             Vector4 v = GetDrawingDimensions(lPreserveAspect);
-            var uv = (activeSprite != null) ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+            var uv = (activeSprite != null) ? SpriteUtility.GetOuterUV(activeSprite) : Vector4.zero;
 
             var color32 = color;
             vh.Clear();
@@ -367,9 +367,9 @@ namespace UnityEngine.UI
 
             if (activeSprite != null)
             {
-                outer = Sprites.DataUtility.GetOuterUV(activeSprite);
-                inner = Sprites.DataUtility.GetInnerUV(activeSprite);
-                padding = Sprites.DataUtility.GetPadding(activeSprite);
+                outer = SpriteUtility.GetOuterUV(activeSprite);
+                inner = SpriteUtility.GetInnerUV(activeSprite);
+                padding = SpriteUtility.GetPadding(activeSprite);
                 border = activeSprite.border;
             }
             else
@@ -439,8 +439,8 @@ namespace UnityEngine.UI
 
             if (activeSprite != null)
             {
-                outer = Sprites.DataUtility.GetOuterUV(activeSprite);
-                inner = Sprites.DataUtility.GetInnerUV(activeSprite);
+                outer = SpriteUtility.GetOuterUV(activeSprite);
+                inner = SpriteUtility.GetInnerUV(activeSprite);
                 border = activeSprite.border;
                 spriteSize = activeSprite.rect.size;
             }
@@ -745,7 +745,7 @@ namespace UnityEngine.UI
                 return;
 
             Vector4 v = GetDrawingDimensions(preserveAspect);
-            Vector4 outer = activeSprite != null ? Sprites.DataUtility.GetOuterUV(activeSprite) : Vector4.zero;
+            Vector4 outer = activeSprite != null ? SpriteUtility.GetOuterUV(activeSprite) : Vector4.zero;
             UIVertex uiv = UIVertex.simpleVert;
             uiv.color = color;
 
@@ -1057,7 +1057,7 @@ namespace UnityEngine.UI
                 if (activeSprite == null)
                     return 0;
                 if (type == Type.Sliced || type == Type.Tiled)
-                    return Sprites.DataUtility.GetMinSize(activeSprite).x / pixelsPerUnit;
+                    return SpriteUtility.GetMinSize(activeSprite).x / pixelsPerUnit;
                 return activeSprite.rect.size.x / pixelsPerUnit;
             }
         }
@@ -1073,7 +1073,7 @@ namespace UnityEngine.UI
                 if (activeSprite == null)
                     return 0;
                 if (type == Type.Sliced || type == Type.Tiled)
-                    return Sprites.DataUtility.GetMinSize(activeSprite).y / pixelsPerUnit;
+                    return SpriteUtility.GetMinSize(activeSprite).y / pixelsPerUnit;
                 return activeSprite.rect.size.y / pixelsPerUnit;
             }
         }

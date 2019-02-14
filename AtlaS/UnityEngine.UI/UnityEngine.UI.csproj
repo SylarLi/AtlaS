@@ -114,6 +114,8 @@
     <Compile Include="UI\Animation\CoroutineTween.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="UI\Atlas\AtlasRaw.cs" />
+    <Compile Include="UI\Atlas\AtlasRawUtil.cs" />
     <Compile Include="UI\Core\AnimationTriggers.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -253,9 +255,11 @@
     <Compile Include="UI\Core\SpecializedCollections\IndexedSet.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="UI\Core\Sprite.cs" />
     <Compile Include="UI\Core\SpriteState.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="UI\Core\SpriteUtility.cs" />
     <Compile Include="UI\Core\StencilMaterial.cs">
       <SubType>Code</SubType>
     </Compile>

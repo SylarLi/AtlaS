@@ -20,6 +20,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>3</WarningLevel>
+    <DocumentationFile>
+    </DocumentationFile>
+    <RegisterForComInterop>false</RegisterForComInterop>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Test|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -52,6 +55,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UnityEngine.UI-Editor\UnityEngine.UI-Editor.csproj">
+      <Project>{E62B51AA-17F8-46F9-96FF-9072C6D47B09}</Project>
+      <Name>UnityEngine.UI-Editor</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EventSystem\EventSystemEditor.cs">
@@ -126,6 +135,7 @@
     <Compile Include="UI\PropertyDrawers\NavigationDrawer.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="UI\PropertyDrawers\SpriteDrawer.cs" />
     <Compile Include="UI\PropertyDrawers\SpriteStateDrawer.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -159,12 +169,6 @@
     <Compile Include="UI\ToggleEditor.cs">
       <SubType>Code</SubType>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\UnityEngine.UI\UnityEngine.UI.csproj">
-      <Project>{cbc800df-4de1-4cbc-9c97-98cbb375204f}</Project>
-      <Name>UnityEngine.UI</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
