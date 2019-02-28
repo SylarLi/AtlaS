@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if AtlaS_ON
+using System;
 using System.Collections.Generic;
 
 namespace UnityEditor.UI.Atlas
@@ -222,7 +223,7 @@ namespace UnityEditor.UI.Atlas
                     return false;
                 }
                 var paddingArea = new Area(
-                    Math.Min(area.width + mPadding, mBin.width), 
+                    Math.Min(area.width + mPadding, mBin.width),
                     Math.Min(area.height + mPadding, mBin.height));
                 var fromIndex = -1;
                 var toIndex = -1;
@@ -482,3 +483,4 @@ namespace UnityEditor.UI.Atlas
         }
     }
 }
+#endif

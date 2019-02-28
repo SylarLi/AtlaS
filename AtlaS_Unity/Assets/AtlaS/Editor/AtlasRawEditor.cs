@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if AtlaS_ON
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -43,9 +44,6 @@ namespace UnityEditor.UI.Atlas
 
         [SerializeField]
         private Vector3 mTexViewParams = new Vector3(0, 0, 1);
-
-        [SerializeField]
-        private Vector3 mSpriteViewParams = new Vector3(0, 0, 1);
 
         [SerializeField]
         private bool mSpriteBorder = false;
@@ -174,7 +172,7 @@ namespace UnityEditor.UI.Atlas
 
         protected override void OnHeaderGUI()
         {
-            
+
         }
 
         public override void OnPreviewGUI(Rect r, GUIStyle background)
@@ -296,7 +294,7 @@ namespace UnityEditor.UI.Atlas
                 }
                 controlID = GUIUtility.GetControlID(FocusType.Passive);
                 eventType = Event.current.GetTypeForControl(controlID);
-                if (eventType == EventType.MouseDown && 
+                if (eventType == EventType.MouseDown &&
                     r.Contains(Event.current.mousePosition) &&
                     !barRect.Contains(Event.current.mousePosition))
                 {
@@ -877,3 +875,4 @@ namespace UnityEditor.UI.Atlas
         }
     }
 }
+#endif

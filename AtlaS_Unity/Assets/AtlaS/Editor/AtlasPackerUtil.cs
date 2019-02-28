@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if AtlaS_ON
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
@@ -33,8 +34,8 @@ namespace UnityEditor.UI.Atlas
                 textures[i].rawQuality = BinRaw.Quality.Full;
                 if (CheckTextureCompressed(texPath)) textures[i].quality = BinRaw.Quality.Normal;
                 var texRect = textures[i].rect;
-                if (EditorUtility.DisplayCancelableProgressBar("", 
-                    string.Format("load texture: {0} [{1}x{2}]", assetLabel, (int)texRect.width, (int)texRect.height), 
+                if (EditorUtility.DisplayCancelableProgressBar("",
+                    string.Format("load texture: {0} [{1}x{2}]", assetLabel, (int)texRect.width, (int)texRect.height),
                     (float)i / textures.Length))
                 {
                     return null;
@@ -69,7 +70,6 @@ namespace UnityEditor.UI.Atlas
 
         public static AtlasRaw PackTextures(AtlasPackData packData, AtlasPackSprite[] textures)
         {
-            var sizeList = AtlasPacker.AtlasSizeList;
             var maxSize = packData.maxAtlasSize;
             var padding = packData.padding;
             var isPOT = packData.isPOT;
@@ -104,7 +104,7 @@ namespace UnityEditor.UI.Atlas
                 var texList = group.ToArray();
                 var texAreas = texList.Select(texture => new AtlasPacker.Area((int)texture.rect.width, (int)texture.rect.height)).ToArray();
                 var groupPackData = new AtlasPackData(packData);
-                if (quality == BinRaw.Quality.RGB16A4 || 
+                if (quality == BinRaw.Quality.RGB16A4 ||
                     quality == BinRaw.Quality.Normal)
                 {
                     groupPackData.isPOT = true;
@@ -316,7 +316,7 @@ namespace UnityEditor.UI.Atlas
             for (int i = 0; i < packers.Count; i++)
             {
                 bins[i] = new BinRaw();
-                bins[i].size = !isPOT && !forceSquare ? 
+                bins[i].size = !isPOT && !forceSquare ?
                     Vector2.zero : new Vector2(packers[i].bin.width, packers[i].bin.height);
             }
             if (!isPOT && !forceSquare)
@@ -400,7 +400,7 @@ namespace UnityEditor.UI.Atlas
                     (int)rect.width, (int)rect.height);
                 if ((bin.quality == BinRaw.Quality.RGB16A4 ||
                     bin.quality == BinRaw.Quality.Normal) &&
-                    bin.transparency && 
+                    bin.transparency &&
                     bin.addition != null)
                 {
                     var alphas = bin.addition.GetPixels(
@@ -517,8 +517,8 @@ namespace UnityEditor.UI.Atlas
                     binRaw.main = AssetDatabase.LoadAssetAtPath<Texture2D>(binPath);
                     UpdateBinTextureSetttings(binPath, (int)(Mathf.Max(binRaw.size.x, binRaw.size.y)), binRaw.quality, transparency);
                 }
-                if ((binRaw.quality == BinRaw.Quality.RGB16A4 || 
-                    binRaw.quality == BinRaw.Quality.Normal) && 
+                if ((binRaw.quality == BinRaw.Quality.RGB16A4 ||
+                    binRaw.quality == BinRaw.Quality.Normal) &&
                     binRaw.transparency && binRaw.addition != null)
                 {
                     var binBytes = binRaw.addition.EncodeToPNG();
@@ -734,3 +734,4 @@ namespace UnityEditor.UI.Atlas
         }
     }
 }
+#endif

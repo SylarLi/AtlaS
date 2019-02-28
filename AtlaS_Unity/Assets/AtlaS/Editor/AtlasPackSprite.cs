@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿#if AtlaS_ON
+using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI.Atlas;
@@ -108,7 +109,7 @@ namespace UnityEditor.UI.Atlas
         }
 
         private int mTransparency = -1;
-        
+
         /// <summary>
         /// if exist alpha channel.
         /// </summary>
@@ -116,7 +117,7 @@ namespace UnityEditor.UI.Atlas
         {
             get
             {
-                if (mTransparency == -1 && 
+                if (mTransparency == -1 &&
                     main != null)
                 {
                     return AtlasRawUtil.CheckTextureTranparency(main.format);
@@ -156,3 +157,4 @@ namespace UnityEditor.UI.Atlas
         }
     }
 }
+#endif

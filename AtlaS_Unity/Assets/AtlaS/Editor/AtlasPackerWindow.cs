@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if AtlaS_ON
+using System;
 using System.IO;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ namespace UnityEditor.UI.Atlas
 {
     public class AtlasPackerWindow : EditorWindow
     {
-        [MenuItem("Atlas/AtlasPacker")]
+        [MenuItem("AtlaS/AtlasPacker")]
         private static void CreateAtlasPacker()
         {
             GetWindow<AtlasPackerWindow>().Show();
@@ -58,3 +59,4 @@ namespace UnityEditor.UI.Atlas
         }
     }
 }
+#endif

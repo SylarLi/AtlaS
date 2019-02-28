@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if AtlaS_ON
+using System;
 
 namespace UnityEditor.UI.Atlas
 {
@@ -43,3 +44,4 @@ namespace UnityEditor.UI.Atlas
         }
     }
 }
+#endif
