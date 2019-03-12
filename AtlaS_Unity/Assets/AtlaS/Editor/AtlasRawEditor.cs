@@ -20,15 +20,16 @@ namespace UnityEditor.UI.Atlas
                 path = Path.GetDirectoryName(path);
             var atlas = CreateInstance<AtlasRaw>();
             atlas.bins = new BinRaw[0];
-            var packData = new AtlasPackData();
-            atlas.maxSize = packData.maxAtlasSize;
-            atlas.padding = packData.padding;
-            atlas.isPOT = packData.isPOT;
-            atlas.forceSquare = packData.forceSquare;
-            var assetPath = Path.Combine(path, AtlasPackerUtil.DefaultAtlasAssetName);
+            var setting = new PackSetting();
+            atlas.maxSize = setting.maxAtlasSize;
+            atlas.padding = setting.padding;
+            atlas.isPOT = setting.isPOT;
+            atlas.forceSquare = setting.forceSquare;
+            var assetPath = Path.Combine(path, PackConst.DefaultAtlasAssetName);
             assetPath = AssetDatabase.GenerateUniqueAssetPath(assetPath);
-            atlas = AtlasPackerUtil.SaveAtlas(atlas, assetPath);
-            Selection.activeObject = atlas;
+            atlas.id = PackUtil.GenerateAtlasId();
+            AssetDatabase.CreateAsset(atlas, assetPath);
+            Selection.activeObject = AssetDatabase.LoadAssetAtPath<AtlasRaw>(assetPath);
         }
 
         private static Color SelectedColor = new Color(62f / 255, 95f / 255, 150 / 255f);
@@ -61,7 +62,7 @@ namespace UnityEditor.UI.Atlas
         private bool mRepackFold = false;
 
         [NonSerialized]
-        private AtlasPackData mPackData;
+        private PackSetting mSetting;
 
         [NonSerialized]
         private bool mPackDataInit = false;
@@ -103,19 +104,19 @@ namespace UnityEditor.UI.Atlas
                 if (!mPackDataInit)
                 {
                     mPackDataInit = true;
-                    mPackData = new AtlasPackData(atlas.maxSize, atlas.padding, atlas.isPOT, atlas.forceSquare, false);
+                    mSetting = new PackSetting(atlas.maxSize, atlas.padding, atlas.isPOT, atlas.forceSquare);
                 }
-                mPackData.maxAtlasSize = EditorGUILayout.IntPopup("Max Size", mPackData.maxAtlasSize, Array.ConvertAll(AtlasPacker.AtlasSizeList, value => value.ToString()), AtlasPacker.AtlasSizeList);
-                mPackData.padding = EditorGUILayout.IntField("Padding", mPackData.padding);
-                mPackData.isPOT = EditorGUILayout.Toggle("Power Of 2", mPackData.isPOT);
-                GUI.enabled = mPackData.isPOT;
-                if (!mPackData.isPOT) mPackData.forceSquare = false;
-                mPackData.forceSquare = EditorGUILayout.Toggle("Force Square", mPackData.forceSquare);
+                mSetting.maxAtlasSize = EditorGUILayout.IntPopup("Max Size", mSetting.maxAtlasSize, Array.ConvertAll(PackConst.AtlasSizeList, value => value.ToString()), PackConst.AtlasSizeList);
+                mSetting.padding = EditorGUILayout.IntField("Padding", mSetting.padding);
+                mSetting.isPOT = EditorGUILayout.Toggle("Power Of 2", mSetting.isPOT);
+                GUI.enabled = mSetting.isPOT;
+                if (!mSetting.isPOT) mSetting.forceSquare = false;
+                mSetting.forceSquare = EditorGUILayout.Toggle("Force Square", mSetting.forceSquare);
                 GUI.enabled = true;
                 var rect = EditorGUILayout.GetControlRect(false, 20);
                 if (GUI.Button(new Rect(rect.center.x - 75, rect.y, 150, rect.height), "Repack"))
                 {
-                    AtlasPackerUtil.Repack(atlas, null, mPackData);
+                    AtlasPacker.Repack(atlas, null, mSetting);
                 }
                 EditorGUILayout.Space();
             }
@@ -125,7 +126,7 @@ namespace UnityEditor.UI.Atlas
             if (EditorGUI.EndChangeCheck() || mAtlasDirty)
             {
                 mFindResult = string.IsNullOrEmpty(mFindSprite) ? null :
-                    AtlasRawUtil.SearchSprites(atlas, mFindSprite);
+                    PackUtil.SearchSprites(atlas, mFindSprite);
             }
             if (mAtlasDirty)
             {
@@ -145,7 +146,7 @@ namespace UnityEditor.UI.Atlas
             EditorGUI.indentLevel -= 1;
             if (atlas.bins.Length > 0)
             {
-                var binNames = Array.ConvertAll(atlas.bins, i => AtlasRawUtil.GetDisplayName(i));
+                var binNames = Array.ConvertAll(atlas.bins, i => PackUtil.GetDisplayName(i));
                 var binIndexes = new int[binNames.Length];
                 for (int i = 0; i < binNames.Length; i++) binIndexes[i] = i;
                 mSelectedBin = EditorGUILayout.IntPopup("Preview Atlas", mSelectedBin, binNames, binIndexes);
@@ -491,7 +492,7 @@ namespace UnityEditor.UI.Atlas
                 var itemRect = new Rect(gridRect.x, gridRect.y, gridRect.width, itemHeight);
                 var iBin = -1;
                 var iSprite = -1;
-                AtlasRawUtil.IndexSprite(atlas, sprite, out iBin, out iSprite);
+                PackUtil.IndexSprite(atlas, sprite, out iBin, out iSprite);
                 if (iBin != -1 && iSprite != -1 &&
                     mSelectedSprites.Any(s => s.bin == iBin && s.sprite == iSprite))
                 {
@@ -521,7 +522,7 @@ namespace UnityEditor.UI.Atlas
                                             var sp = mFindResult[m];
                                             var sBin = -1;
                                             var sSprite = -1;
-                                            AtlasRawUtil.IndexSprite(atlas, sp, out sBin, out sSprite);
+                                            PackUtil.IndexSprite(atlas, sp, out sBin, out sSprite);
                                             if (sBin != -1 && sSprite != -1 &&
                                                 !mSelectedSprites.Any(ss => ss.bin == sBin && ss.sprite == sSprite))
                                             {
@@ -569,7 +570,7 @@ namespace UnityEditor.UI.Atlas
                     var sprite = mFindResult[i];
                     var iBin = -1;
                     var iSprite = -1;
-                    AtlasRawUtil.IndexSprite(atlas, sprite, out iBin, out iSprite);
+                    PackUtil.IndexSprite(atlas, sprite, out iBin, out iSprite);
                     if (iBin != -1 && iSprite != -1)
                     {
                         mSelectedSprites.Add(new SelectedSprite(iBin, iSprite));
@@ -689,10 +690,10 @@ namespace UnityEditor.UI.Atlas
             var menu = new GenericMenu();
             if (mSelectedSprites.Count > 0)
             {
-                var qualityNames = Enum.GetNames(typeof(BinRaw.Quality));
+                var qualityNames = Enum.GetNames(typeof(PackQuality));
                 foreach (var qualityName in qualityNames)
                 {
-                    var quality = (BinRaw.Quality)Enum.Parse(typeof(BinRaw.Quality), qualityName);
+                    var quality = (PackQuality)Enum.Parse(typeof(PackQuality), qualityName);
                     menu.AddItem(new GUIContent("Quality/" + qualityName), false, () =>
                     {
                         CompressSelected(atlas, quality, mSelectedSprites);
@@ -725,7 +726,7 @@ namespace UnityEditor.UI.Atlas
             if (!string.IsNullOrEmpty(folder))
             {
                 var exports = selected.Select(sp => atlas.bins[sp.bin].sprites[sp.sprite]).ToArray();
-                AtlasPackerUtil.Export(atlas, exports, folder);
+                AtlasPacker.Export(atlas, exports, folder);
             }
         }
 
@@ -742,13 +743,13 @@ namespace UnityEditor.UI.Atlas
                         exports.Add(sprite);
                     }
                 }
-                AtlasPackerUtil.Export(atlas, exports.ToArray(), folder);
+                AtlasPacker.Export(atlas, exports.ToArray(), folder);
             }
         }
 
         private void DeleteSelected(AtlasRaw atlas, List<SelectedSprite> selected)
         {
-            var list = new List<AtlasPackSprite>(AtlasPackSprite.ListSprites(atlas));
+            var list = new List<IPackSprite>(PackAtlasSprite.ListSprites(atlas));
             foreach (var selectedSprite in selected)
             {
                 var bin = atlas.bins[selectedSprite.bin];
@@ -761,13 +762,13 @@ namespace UnityEditor.UI.Atlas
                     }
                 }
             }
-            AtlasPackerUtil.Repack(atlas, list.ToArray());
+            AtlasPacker.Repack(atlas, list.ToArray());
         }
 
-        private void CompressSelected(AtlasRaw atlas, BinRaw.Quality quality, List<SelectedSprite> selected)
+        private void CompressSelected(AtlasRaw atlas, PackQuality quality, List<SelectedSprite> selected)
         {
             var count = 0;
-            var list = new List<AtlasPackSprite>(AtlasPackSprite.ListSprites(atlas));
+            var list = new List<IPackSprite>(PackAtlasSprite.ListSprites(atlas));
             foreach (var selectedSprite in selected)
             {
                 var bin = atlas.bins[selectedSprite.bin];
@@ -784,17 +785,17 @@ namespace UnityEditor.UI.Atlas
             }
             if (count > 0)
             {
-                AtlasPackerUtil.Repack(atlas, list.ToArray());
+                AtlasPacker.Repack(atlas, list.ToArray());
             }
         }
 
         private void DisplayImportMenu(AtlasRaw atlas, bool isFolder)
         {
             var menu = new GenericMenu();
-            var qualityNames = Enum.GetNames(typeof(BinRaw.Quality));
+            var qualityNames = Enum.GetNames(typeof(PackQuality));
             foreach (var qualityName in qualityNames)
             {
-                var quality = (BinRaw.Quality)Enum.Parse(typeof(BinRaw.Quality), qualityName);
+                var quality = (PackQuality)Enum.Parse(typeof(PackQuality), qualityName);
                 menu.AddItem(new GUIContent(qualityName), false, () =>
                 {
                     string[] files = null;
@@ -811,10 +812,10 @@ namespace UnityEditor.UI.Atlas
             menu.ShowAsContext();
         }
 
-        private void AddFiles(AtlasRaw atlas, BinRaw.Quality quality, string[] files, bool replaceSpriteByName = true)
+        private void AddFiles(AtlasRaw atlas, PackQuality quality, string[] files, bool replaceSpriteByName = true)
         {
-            var textures = new List<AtlasPackSprite>(AtlasPackSprite.ListSprites(atlas));
-            Action<AtlasPackSprite> addTexture = (texture) =>
+            var textures = new List<IPackSprite>(PackAtlasSprite.ListSprites(atlas));
+            Action<IPackSprite> addTexture = (texture) =>
             {
                 if (replaceSpriteByName)
                 {
@@ -832,9 +833,8 @@ namespace UnityEditor.UI.Atlas
             {
                 if (File.Exists(file))
                 {
-                    var texture = new AtlasPackSprite(file);
+                    var texture = new PackAssetSprite(file);
                     texture.name = Path.GetFileNameWithoutExtension(file);
-                    texture.rawQuality = BinRaw.Quality.Full;
                     texture.quality = quality;
                     addTexture(texture);
                 }
@@ -849,15 +849,14 @@ namespace UnityEditor.UI.Atlas
                         var assetDir = Path.GetDirectoryName(assetPath);
                         var assetName = Path.GetFileNameWithoutExtension(assetPath);
                         var assetLabel = string.IsNullOrEmpty(assetDir) ? assetName : assetDir + "/" + assetName;
-                        var texture = new AtlasPackSprite(image);
+                        var texture = new PackAssetSprite(image);
                         texture.name = assetLabel;
-                        texture.rawQuality = BinRaw.Quality.Full;
                         texture.quality = quality;
                         addTexture(texture);
                     }
                 }
             }
-            AtlasPackerUtil.Repack(atlas, textures.ToArray());
+            AtlasPacker.Repack(atlas, textures.ToArray());
         }
 
         [Serializable]
