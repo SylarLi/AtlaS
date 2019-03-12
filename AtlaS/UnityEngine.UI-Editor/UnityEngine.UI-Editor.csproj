@@ -156,9 +156,6 @@
     <Compile Include="..\UnityEngine.UI\UI\Atlas\AtlasRaw.cs">
       <Link>UI\Atlas\AtlasRaw.cs</Link>
     </Compile>
-    <Compile Include="..\UnityEngine.UI\UI\Atlas\AtlasRawUtil.cs">
-      <Link>UI\Atlas\AtlasRawUtil.cs</Link>
-    </Compile>
     <Compile Include="..\UnityEngine.UI\UI\Core\AnimationTriggers.cs">
       <Link>UI\Core\AnimationTriggers.cs</Link>
       <SubType>Code</SubType>
