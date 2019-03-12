@@ -64,15 +64,7 @@ namespace UnityEngine.UI.Atlas
     [Serializable]
     public class BinRaw
     {
-        public enum Quality
-        {
-            Normal,                 // RGB4 with Alpha4 (Recommend)
-            Legacy,                 // PC DXT5, iOS ARGB16, Android ETC2-RGBA8
-            RGB16A4,                // RGB16 with Alpha4
-            Full,                   // RGBA32 or ARGB32 | RGB24
-        }
-
-        public Quality quality = Quality.Full;
+        public int quality;
 
         public Vector2 size;
 
@@ -81,27 +73,6 @@ namespace UnityEngine.UI.Atlas
         public Texture2D main;
 
         public Texture2D addition;
-
-        public bool transparency
-        {
-            get
-            {
-                switch (quality)
-                {
-                    case Quality.Full:
-                    case Quality.Legacy:
-                        {
-                            return AtlasRawUtil.CheckTextureTranparency(main.format);
-                        }
-                    case Quality.RGB16A4:
-                    case Quality.Normal:
-                        {
-                            return addition != null;
-                        }
-                }
-                return false;
-            }
-        }
 
         public SpriteRaw FindSprite(string spriteName)
         {

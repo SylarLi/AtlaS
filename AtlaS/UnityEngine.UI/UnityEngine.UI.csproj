@@ -115,7 +115,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="UI\Atlas\AtlasRaw.cs" />
-    <Compile Include="UI\Atlas\AtlasRawUtil.cs" />
     <Compile Include="UI\Core\AnimationTriggers.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -4,7 +4,7 @@ using UnityEngine.UI.Atlas;
 namespace UnityEngine.UI
 {
     [Serializable]
-    public sealed class Sprite
+    public sealed class Sprite : ISerializationCallbackReceiver
     {
         [Serializable]
         public enum Type
@@ -25,6 +25,9 @@ namespace UnityEngine.UI
         [SerializeField]
         private string m_SpriteName;
 
+        [SerializeField]
+        private bool m_SpriteDirty = true;
+
         [NonSerialized]
         private SpriteRaw m_SpriteRaw;
 
@@ -41,8 +44,6 @@ namespace UnityEngine.UI
             m_AtlasRaw = atlasRaw;
             m_SpriteName = spriteName;
             Debug.Assert(!IsNull());
-            m_SpriteRaw = m_AtlasRaw.FindSprite(m_SpriteName);
-            Debug.Assert(m_SpriteRaw != null);
         }
 
         public Type type { get { return m_Type; } }
@@ -53,7 +54,7 @@ namespace UnityEngine.UI
 
         public string spriteName { get { return m_SpriteName; } }
 
-        public SpriteRaw spriteRaw { get { if (m_SpriteRaw == null) m_SpriteRaw = atlasRaw.FindSprite(spriteName); return m_SpriteRaw; } }
+        public SpriteRaw spriteRaw { get { if (m_SpriteDirty) { m_SpriteRaw = atlasRaw != null ? atlasRaw.FindSprite(spriteName) : null; m_SpriteDirty = false; }; return m_SpriteRaw; } }
 
         public string name { get { return type == Type.Atlas ? spriteRaw.name : sprite.name; } }
 
@@ -103,7 +104,17 @@ namespace UnityEngine.UI
         private bool IsNull()
         {
             return (type == Type.Sprite && sprite == null) ||
-                (type == Type.Atlas && (atlasRaw == null || string.IsNullOrEmpty(spriteName)));
+                (type == Type.Atlas && spriteRaw == null);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            m_SpriteDirty = true;
+        }
+
+        public void OnBeforeSerialize()
+        {
+
         }
     }
 }
