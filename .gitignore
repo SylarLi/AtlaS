@@ -1,0 +1,12 @@
+AtlaS/.vs/
+.gitignore
+AtlaS/Output/
+AtlaS/UnityEditor.UI/bin/
+AtlaS/UnityEditor.UI/obj/
+AtlaS/UnityEngine.UI/bin/
+AtlaS/UnityEngine.UI/obj/
+AtlaS/UnityEngine.UI-Editor/bin/
+AtlaS/UnityEngine.UI-Editor/obj/
+AtlaS_Unity/AtlaS_Unity.userprefs
+AtlaS_Unity/.vs/
+AtlaS_Unity/Library/
