@@ -5,7 +5,12 @@ AtlaS是一个适用于UGUI的Atlas工具，与Unity3d内置的Sprite Packer类�
 ## 主要功能
 
 * UGUI扩展，为支持Atlas重写了Sprite(兼容原Sprite)
+
+![Image](https://github.com/SylarLi/AtlaS/blob/master/AtlaS_Unity/Assets/AtlaS/Demo/1.Switch/snapshot_1.png)
+
 * Atlas编辑功能，涵盖Sprite打包/编辑/预览等
+
+![Image](https://github.com/SylarLi/AtlaS/blob/master/AtlaS_Unity/Assets/AtlaS/Demo/1.Switch/snapshot_2.png)
 
 ## 使用说明
 
