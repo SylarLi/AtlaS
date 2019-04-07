@@ -6,21 +6,15 @@ namespace UnityEditor.UI.Atlas
     [Serializable]
     public class PackSetting
     {
-        public int maxAtlasSize;
+        public int maxAtlasSize = 1024;
 
-        public int padding;
+        public int padding = 1;
 
-        public bool isPOT;
+        public bool isPOT = false;
 
-        public bool forceSquare;
+        public bool forceSquare = false;
 
-        public PackSetting()
-        {
-            maxAtlasSize = 1024;
-            padding = 1;
-            isPOT = true;
-            forceSquare = false;
-        }
+        public PackSetting() { }
 
         public PackSetting(int maxAtlasSize, int padding, bool isPOT, bool forceSquare)
         {

@@ -139,7 +139,12 @@ namespace UnityEditor.UI.Atlas
             {
                 var texPath = AssetDatabase.GetAssetPath(texAsset);
                 if (!string.IsNullOrEmpty(texPath))
+                {
                     File.Delete(texPath);
+                    var metaPath = texPath + ".meta";
+                    if (File.Exists(metaPath))
+                        File.Delete(metaPath);
+                }
             }
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
         }

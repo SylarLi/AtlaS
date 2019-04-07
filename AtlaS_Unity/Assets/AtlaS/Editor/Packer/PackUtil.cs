@@ -106,23 +106,6 @@ namespace UnityEditor.UI.Atlas
                 format == TextureFormat.DXT5;
         }
 
-        public static SpriteRaw[] SearchSprites(AtlasRaw atlas, string matchWord)
-        {
-            matchWord = matchWord.ToLower();
-            var list = new List<SpriteRaw>();
-            foreach (var bin in atlas.bins)
-            {
-                foreach (var sprite in bin.sprites)
-                {
-                    if (sprite.name.ToLower().Contains(matchWord))
-                    {
-                        list.Add(sprite);
-                    }
-                }
-            }
-            return list.ToArray();
-        }
-
         public static void IndexSprite(AtlasRaw atlas, SpriteRaw sprite, out int iBin, out int iSprite)
         {
             iBin = -1;

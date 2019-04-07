@@ -75,7 +75,7 @@ namespace UnityEditor.UI.Atlas
                 var assetName = Path.GetFileNameWithoutExtension(assetPath);
                 var assetLabel = string.IsNullOrEmpty(assetDir) ? assetName : assetDir + "/" + assetName;
                 textures[i].name = assetLabel;
-                textures[i].quality = PackUtil.CheckTextureCompressed(texPath) ? PackQuality.Normal : PackQuality.Full;
+                textures[i].quality = PackUtil.CheckTextureCompressed(texPath) ? PackQuality.AlphaSplit : PackQuality.Full;
             }
             var atlasRaw = AtlasPacker.Pack(folder, textures, mSetting);
             if (atlasRaw != null)

@@ -117,7 +117,7 @@ namespace UnityEditor.UI.Atlas
                 for (int i = 0; i < groupPaths.Length; i++)
                 {
                     groupSprites[i] = new PackAssetSprite(groupPaths[i]) { name = groupNames[i] };
-                    groupSprites[i].quality = PackUtil.CheckTextureCompressed(groupPaths[i]) ? PackQuality.Normal : PackQuality.Full;
+                    groupSprites[i].quality = PackUtil.CheckTextureCompressed(groupPaths[i]) ? PackQuality.AlphaSplit : PackQuality.Full;
                 }
                 var groupTag = string.IsNullOrEmpty(group.Key) ? EmptyTagName : group.Key;
                 var groupFolder = Path.Combine(targetFolder, groupTag);

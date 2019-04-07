@@ -1,6 +1,7 @@
 ﻿namespace UnityEngine.UI.Atlas
 {
     [RequireComponent(typeof(Image))]
+    [DisallowMultipleComponent]
     public class ImageSpriteAnimationHook : MonoBehaviour
     {
 #if AtlaS_ON

@@ -1,0 +1,10 @@
+1.在Project窗口中点击右键，弹出的菜单栏中选择Create/Atlas Raw，可以创建一个新的Atlas。
+2.选中Atlas，在Inspector窗口中可以进行Sprite的增删改查等操作。
+3.在Atlas预览中选中Sprite后，于下方的Sprite Preview子窗口将会显示Sprite的基本信息，也可以设定Sprite的name(用于查询)和border。
+注1：关于导入图片的name生成规则，如果是以文件方式导入，name将设置为文件名称；如果是以文件夹方式导入，name将设置为导入文件夹的相对路径。
+注2：修改Sprite的name或border之后需要点击Save按钮进行保存，否则修改可能会丢失。
+
+Sprite打包成的Atlas图集是预先生成的，在生成Atlas的时候就需要设定一些打包参数和图集品质，主要是通过以下两种方式进行设置：
+1.继承PackProcessor，重载若干属性，例如alphasplit(是否分离alpha通道)，forcePowerOf2(强制设置宽高为2的幂次方)等;
+2.继承PackPostProcessor，重载若干方法，设置各个平台的贴图格式。目前支持分别设置Standalone/iPhone/Android三个平台。
+每种Processor和PostProcessor对应了一个图集品质，工具已经内置了两种品质：Full(32bit)/AlphaSplit(8bit)。

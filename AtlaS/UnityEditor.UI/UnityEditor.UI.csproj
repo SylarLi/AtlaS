@@ -135,7 +135,6 @@
     <Compile Include="UI\PropertyDrawers\NavigationDrawer.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\PropertyDrawers\SpriteDrawer.cs" />
     <Compile Include="UI\PropertyDrawers\SpriteStateDrawer.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -644,6 +644,7 @@ namespace UnityEditor.UI.Atlas
 
             public static string Sprite2AssetPath(UnityEngine.Sprite sprite)
             {
+                if (sprite == null) return "";
                 var assetPath = AssetDatabase.GetAssetPath(sprite);
                 Debug.Assert(!string.IsNullOrEmpty(assetPath), "Can not find sprite: " + sprite.name);
                 if (assetPath.Equals(UnityEditorResPath) ||
@@ -660,7 +661,11 @@ namespace UnityEditor.UI.Atlas
 
             public static UnityEngine.Sprite AssetPath2Sprite(string assetPath)
             {
-                if (assetPath.StartsWith(UnityEditorResPath))
+                if (string.IsNullOrEmpty(assetPath))
+                {
+                    return null;
+                }
+                else if (assetPath.StartsWith(UnityEditorResPath))
                 {
                     var assetName = assetPath.Substring(UnityEditorResPath.Length + 1);
                     return (UnityEngine.Sprite)EditorGUIUtility.Load(assetName);

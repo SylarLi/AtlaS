@@ -74,6 +74,11 @@ namespace UnityEngine.UI
 
         public bool packed { get { return type == Type.Atlas ? true : sprite.packed; } }
 
+        public void SetSpriteDirty()
+        {
+            m_SpriteDirty = true;
+        }
+
         public override int GetHashCode()
         {
             return base.GetHashCode();
@@ -109,7 +114,7 @@ namespace UnityEngine.UI
 
         public void OnAfterDeserialize()
         {
-            m_SpriteDirty = true;
+            SetSpriteDirty();
         }
 
         public void OnBeforeSerialize()

@@ -1,8 +1,11 @@
 ﻿#if AtlaS_ON
 using System.Linq;
 using System.IO;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UI.Atlas;
+using EditorSceneManager = UnityEditor.SceneManagement.EditorSceneManager;
 
 namespace UnityEditor.UI.Atlas
 {
@@ -31,6 +34,7 @@ namespace UnityEditor.UI.Atlas
                 Debug.LogError("Pack failed.");
                 return null;
             }
+            RefreshUI();
             return atlasRaw;
         }
 
@@ -59,6 +63,38 @@ namespace UnityEditor.UI.Atlas
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             return exportSprites;
+        }
+
+        private static void RefreshUI()
+        {
+            for (int i = EditorSceneManager.sceneCount - 1; i >= 0; i--)
+            {
+                var iscene = EditorSceneManager.GetSceneAt(i);
+                if (iscene.IsValid())
+                {
+                    var roots = iscene.GetRootGameObjects();
+                    var list = new List<Image>();
+                    foreach (var go in roots)
+                    {
+                        if (go.activeSelf)
+                        {
+                            var comp = go.GetComponent<Image>();
+                            if (comp != null) list.Add(comp);
+                            list.AddRange(go.GetComponentsInChildren<Image>(false));
+                        }
+                    }
+                    foreach (var image in list)
+                    {
+                        var sprite = image.sprite;
+                        if (sprite != null &&
+                            sprite.type == UnityEngine.UI.Sprite.Type.Atlas)
+                        {
+                            sprite.SetSpriteDirty();
+                            image.SetAllDirty();
+                        }
+                    }
+                }
+            }
         }
     }
 }

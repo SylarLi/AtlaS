@@ -52,7 +52,8 @@ namespace UnityEditor.UI.Atlas
         public PackAssetSprite(string assetPath)
         {
             mAssetPath = assetPath;
-            var sprite = AssetDatabase.LoadAssetAtPath<UnityEngine.Sprite>(assetPath);
+            var sprite = mAssetPath.StartsWith("Assets/") ? 
+                AssetDatabase.LoadAssetAtPath<UnityEngine.Sprite>(mAssetPath) : null;
             if (sprite != null)
             {
                 mBorder = sprite.border;
@@ -68,7 +69,7 @@ namespace UnityEditor.UI.Atlas
             mName = Path.GetFileNameWithoutExtension(mAssetPath);
             mRect = new Rect(0, 0, mAsset.width, mAsset.height);
             mTransparency = PackUtil.CheckTextureTranparency(mAsset.format);
-            mQuality = PackQuality.Normal;
+            mQuality = PackQuality.AlphaSplit;
         }
 
         public Color[] Read()
